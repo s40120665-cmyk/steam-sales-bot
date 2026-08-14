@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг скидок Steam</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #fff; margin-bottom: 30px; }
+        .table-container { max-width: 1000px; margin: 0 auto; background: #162231; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233c51; }
+        th { background-color: #1f334b; color: #66c0f4; font-weight: bold; }
+        tr:hover { background-color: #213143; }
+        img { width: 120px; border-radius: 4px; display: block; }
+        a { color: #66c0f4; text-decoration: none; font-weight: bold; }
+        a:hover { text-decoration: underline; }
+        
+        /* Цветовое кодирование ячеек скидок */
+        .discount-cell { font-weight: bold; text-align: center; border-radius: 4px; padding: 6px; color: #fff; }
+        .discount-high { background-color: #4CAF50; } /* Зеленый от 70% */
+        .discount-medium { background-color: #f44336; } /* Красный от 50% до 70% */
+        .discount-low { background-color: #ff9800; } /* Оранжевый ниже 50% */
+    </style>
+</head>
+<body>
+    <h1>🎮 Актуальные Скидки Steam (Казахстан / РФ / США)</h1>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Обложка</th>
+                    <th>Название игры</th>
+                    <th>Скидка</th>
+                    <th>Цена КЗ</th>
+                    <th>Цена РФ</th>
+                    <th>Цена США</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr>
+                    <td><img src="https://shared.akamai.steamstatic.com/store_images/steam/apps/292000/header.jpg" alt="logo"></td>
+                    <td><a href="https://store.steampowered.com/app/292000" target="_blank">No More Room in Hell 2</a></td>
+                    <td><span class="discount-cell discount-low">-35%</span></td>
+                    <td>4940 ₸</td>
+                    <td>715 ₽</td>
+                    <td>$19</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
