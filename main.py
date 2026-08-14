@@ -1,80 +1,97 @@
 import os
 import requests
-import config # Подключаем наш файл со ссылками
+import config
 
 def main():
-    # 1. Безопасный запрос к Steam, используя ссылку из конфига
+    LIST_FILE = "games_list.txt"
+
+    # 1. Проверяем, существует ли ваш список игр
+    if not os.path.exists(LIST_FILE):
+        print(f"Файл {LIST_FILE} не найден! Создайте его на GitHub.")
+        return
+
+    # Читаем ваш персональный список игр
+    target_games = {}
+    with open(LIST_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            if ":" in line:
+                app_id, name = line.strip().split(":", 1)
+                target_games[app_id.strip()] = name.strip()
+
+    if not target_games:
+        print("Список игр в games_list.txt пуст.")
+        return
+
+    # Собираем все ID игр в одну строку для пакетного запроса к Steam
+    app_ids_str = ",".join(target_games.keys())
+
+    # 2. Делаем единый запрос цены, собирая адрес ИЗ КОНФИГА
+    price_url = config.STEAM_PRICE_API_BASE + app_ids_str + "&cc=kz&filters=price_overview"
     try:
-        response = requests.get(config.STEAM_API_URL, timeout=10).json()
+        response = requests.get(price_url, timeout=15).json()
     except Exception as e:
         print("Ошибка запроса к Steam:", e)
         return
 
-    # Извлекаем игры из всех блоков витрины
-    specials = response.get("specials", {}).get("items", [])
-    coming_soon = response.get("coming_soon", {}).get("items", [])
-    top_sellers = response.get("top_sellers", {}).get("items", [])
-    new_releases = response.get("new_releases", {}).get("items", [])
-    
-    raw_games = specials + coming_soon + top_sellers + new_releases
-    
     bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
     channel_id = os.environ["TELEGRAM_CHANNEL_ID"]
     
     games_to_post = []
-    seen_ids = set()
 
-    # 2. Фильтруем игры со скидками
-    for game in raw_games:
-        app_id = str(game.get("id"))
+    # 3. Перебираем игры из ответа Steam
+    for app_id, custom_name in target_games.items():
+        game_data = response.get(app_id, {})
         
-        if app_id and (app_id not in seen_ids):
-            discount = game.get("discount_percent", 0)
+        if game_data.get("success"):
+            price_info = game_data.get("data", {}).get("price_overview", {})
             
-            if discount > 0:
-                name = game.get("name", "Unknown Game")
-                final_price_raw = game.get("final_price", 0)
-                new_price = int(final_price_raw / 100) if final_price_raw else 0
+            if price_info:
+                discount = price_info.get("discount_percent", 0)
                 
-                games_to_post.append({
-                    "id": app_id,
-                    "name": name,
-                    "discount": discount,
-                    "price": new_price
-                })
-                seen_ids.add(app_id)
+                # Если на игру из вашего списка СЕЙЧАС есть скидка
+                if discount > 0:
+                    final_price_raw = price_info.get("final", 0)
+                    new_price = int(final_price_raw / 100) # Переводим тиыны в тенге
+                    
+                    games_to_post.append({
+                        "id": app_id,
+                        "name": custom_name,
+                        "discount": discount,
+                        "price": new_price
+                    })
 
-    # 3. Формируем ОДНО компактное сообщение из найденных игр
+    # 4. Формируем ОДНО общее сообщение для Телеграм-канала
     if games_to_post:
-        # Берем первые 10 игр для одного поста
-        chunk = games_to_post[:10]
+        print(f"Найдено игр со скидками из вашего списка: {len(games_to_post)}")
         
-        message_lines = ["🔥 **АКТУАЛЬНЫЕ СКИДКИ STEAM (Казахстан 🇰🇿)**\n"]
-        for g in chunk:
-            # Собираем ссылку на игру из базовой части в конфиге и ID игры
-            game_link = config.STEAM_STORE_APP_BASE + g['id']
-            line = "• [" + g['name'] + "](" + game_link + ") | -" + str(g['discount']) + "% | " + str(g['price']) + " ₸"
-            message_lines.append(line)
-        
-        full_text = "\n".join(message_lines)
+        chunk_size = 10
+        for i in range(0, len(games_to_post), chunk_size):
+            chunk = games_to_post[i:i + chunk_size]
+            
+            message_lines = ["🔥 **СКИДКИ НА ИГРЫ ИЗ НАШЕГО СПИСКА (Казахстан 🇰🇿)**\n"]
+            for g in chunk:
+                game_link = config.STEAM_STORE_APP_BASE + g['id']
+                line = f"• [{g['name']}]({game_link}) | -{g['discount']}% | {g['price']} ₸"
+                message_lines.append(line)
+            
+            full_text = "\n".join(message_lines)
 
-        # 4. Отправляем пачку в Telegram, используя адрес из конфига
-        tg_url = config.TELEGRAM_API_BASE + bot_token + "/sendMessage"
-        payload = {
-            "chat_id": channel_id,
-            "text": full_text,
-            "parse_mode": "Markdown",
-            "disable_web_page_preview": True
-        }
-        
-        res = requests.post(tg_url, json=payload)
-        
-        if res.status_code == 200:
-            print("Успешно опубликован сборный пост.")
-        else:
-            print("Ошибка отправки в ТГ:", res.text)
+            # Отправка в Telegram по адресу из конфига
+            tg_url = config.TELEGRAM_API_BASE + bot_token + "/sendMessage"
+            payload = {
+                "chat_id": channel_id,
+                "text": full_text,
+                "parse_mode": "Markdown",
+                "disable_web_page_preview": True
+            }
+            
+            res = requests.post(tg_url, json=payload)
+            if res.status_code == 200:
+                print("Пачка скидок успешно опубликована.")
+            else:
+                print("Ошибка отправки в ТГ:", res.text)
     else:
-        print("Скидок не найдено.")
+        print("В данный момент скидок на игры из вашего списка нет.")
 
 if __name__ == "__main__":
     main()
