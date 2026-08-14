@@ -7,3 +7,38 @@
 1962700: Subnautica 2
 3079210: Hell Let Loose Vietnam
 292000: No More Room in Hell 2
+570: Dota 2
+440: Team Fortress 2
+252490: Rust
+346110: ARK Survival Evolved
+292030: The Witcher 3 Wild Hunt
+251570: 7 Days to Die
+105600: Terraria
+218620: PAYDAY 2
+397540: Borderlands 3
+236430: DARK SOULS III
+413150: Stardew Valley
+275850: No Mans Sky
+582010: Monster Hunter World
+1151640: Horizon Zero Dawn
+1190460: Death Stranding
+1282100: Resident Evil Village
+1235140: Yakuza Like a Dragon
+1794680: Vampire Survivors
+1326470: Sons Of The Forest
+1593500: God of War
+1817070: Marvels Spider-Man Remastered
+1142710: Total War WARHAMMER III
+1446780: Monster Hunter Rise
+1604030: V Rising
+552500: Warhammer Vermintide 2
+311210: Call of Duty Black Ops III
+374320: DARK SOULS III
+648350: Jurassic World Evolution
+227300: Euro Truck Simulator 2
+244210: Assetto Corsa
+281990: Stellaris
+391220: Rise of the Tomb Raider
+489830: The Elder Scrolls V Skyrim Special Edition
+582660: Black Desert
+750920: Shadow of the Tomb Raider
