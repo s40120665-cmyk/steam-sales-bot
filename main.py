@@ -4,90 +4,97 @@ import requests
 def main():
     TXT_FILE = "posted_games.txt"
 
-    # 1. Читаем базу данных
+    # 1. Читаем базу данных уже опубликованных игр
     if os.path.exists(TXT_FILE):
         with open(TXT_FILE, "r", encoding="utf-8") as f:
             published_ids = [line.strip() for line in f.readlines()]
     else:
         published_ids = []
 
-    # 2. Запрос к API Steam с регионом Казахстана (cc=kz, валюта KZT, язык RU)
-    # Используем метод, который вытягивает расширенный список всех скидок региона
-    url = "https://store.steampowered.com/api/featuredcategories/?cc=kz&l=ru"
+    # 2. Запрашиваем 1000 самых популярных игр в Steam через SteamSpy API
+    # Этот метод выдает реальные хиты, на которые сейчас есть скидки
+    url = "https://steamspy.com/api.php?request=top100in2weeks"
     try:
-        response = requests.get(url, timeout=10).json()
+        steamspy_data = requests.get(url, timeout=15).json()
     except Exception as e:
-        print(f"Ошибка запроса к Steam: {e}")
+        print(f"Ошибка запроса к SteamSpy: {e}")
         return
 
-    # Достаем списки скидок из разных категорий Steam (главные скидки и спец. предложения)
-    specials_items = response.get("specials", {}).get("items", [])
-    top_sellers = response.get("top_sellers", {}).get("items", [])
-    
-    # Объединяем их в один список, убирая дубликаты
-    all_games = {game["id"]: game for game in (specials_items + top_sellers) if "discount_percent" in game and game["discount_percent"] > 0}
-    
     bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
     channel_id = os.environ["TELEGRAM_CHANNEL_ID"]
     
-    new_published_ids = []
     games_to_post = []
 
-    # 3. Фильтруем только новые скидки
-    for app_id, game in all_games.items():
+    # 3. Фильтруем только игры со скидками, которых нет в нашей базе данных
+    for app_id, game_info in steamspy_data.items():
         str_id = str(app_id)
+        
         if str_id not in published_ids:
-            name = game["name"]
-            discount = game["discount_percent"]
+            discount = game_info.get("discount", 0)
             
-            # Цены в Казахстане приходят в тиынах (как копейки, делим на 100)
-            # Если игра бесплатная, ставим 0
-            final_price_raw = game.get("final_price", 0)
-            new_price = int(final_price_raw / 100) if final_price_raw else 0
-            
-            # Сохраняем игру для общего списка
-            games_to_post.append({
-                "id": str_id,
-                "name": name,
-                "discount": discount,
-                "price": new_price
-            })
-            new_published_ids.append(str_id)
+            # Если на игру есть скидка (больше 0)
+            if discount > 0:
+                name = game_info.get("name", "Unknown Game")
+                
+                # Запрашиваем точную цену в тенге напрямую у Steam для этой игры
+                # cc=kz гарантирует обход блокировок РФ и показ заблокированных игр
+                price_url = f"https://store.steampowered.com/api/appdetails?appids={str_id}&cc=kz&filters=price_overview"
+                try:
+                    price_res = requests.get(price_url, timeout=5).json()
+                    if price_res and price_res.get(str_id, {}).get("success"):
+                        price_data = price_res[str_id]["data"].get("price_overview", {})
+                        # Цена приходит в тиынах, делим на 100
+                        new_price = int(price_data.get("final", 0) / 100)
+                    else:
+                        new_price = "Уточняйте"
+                except:
+                    new_price = "Уточняйте"
 
-    # 4. Формируем ОДНО сообщение из всех найденных игр (не более 10 штук за раз, чтобы влезло в лимит ТГ)
+                games_to_post.append({
+                    "id": str_id,
+                    "name": name,
+                    "discount": discount,
+                    "price": new_price
+                })
+
+    # 4. Формируем и отправляем сборные посты по 10 игр в каждом
     if games_to_post:
-        # Берем первые 10 новых игр для одного поста
-        chunk = games_to_post[:10]
+        print(f"Найдено новых игр со скидками: {len(games_to_post)}")
         
-        message_lines = ["🔥 **НОВЫЕ СКИДКИ STEAM (Казахстан 🇰🇿)**\n"]
-        for g in chunk:
-            line = f"• [{g['name']}](https://steampowered.com{g['id']}) | -{g['discount']}% | {g['price']} ₸"
-            message_lines.append(line)
-        
-        full_text = "\n".join(message_lines)
+        # Разбиваем огромный список на пачки по 10 штук
+        chunk_size = 10
+        for i in range(0, len(games_to_post), chunk_size):
+            chunk = games_to_post[i:i + chunk_size]
+            
+            message_lines = ["🔥 **АКТУАЛЬНЫЕ СКИДКИ STEAM (Казахстан 🇰🇿)**\n"]
+            for g in chunk:
+                price_text = f"{g['price']} ₸" if isinstance(g['price'], int) else g['price']
+                line = f"• [{g['name']}](https://store.steampowered.com/app/{g['id']}) | -{g['discount']}% | {price_text}"
+                message_lines.append(line)
+            
+            full_text = "\n".join(message_lines)
 
-        # Отправляем весь список одним постом в Telegram
-        tg_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        payload = {
-            "chat_id": channel_id,
-            "text": full_text,
-            "parse_mode": "Markdown",
-            "disable_web_page_preview": True # Выключаем превью ссылок, чтобы пост был компактным
-        }
-        
-        res = requests.post(tg_url, json=payload)
-        
-        if res.status_code == 200:
-            print(f"Успешно опубликован сборный пост из {len(chunk)} игр.")
-            # Записываем в базу только те игры, которые РЕАЛЬНО вошли в этот пост
-            with open(TXT_FILE, "a", encoding="utf-8") as f:
-                for g in chunk:
-                    f.write(f"{g['id']}\n")
-            print("База данных на GitHub обновлена.")
-        else:
-            print(f"Ошибка отправки сборного поста в ТГ: {res.text}")
+            # Отправка пачки в Телеграм
+            tg_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            payload = {
+                "chat_id": channel_id,
+                "text": full_text,
+                "parse_mode": "Markdown",
+                "disable_web_page_preview": True
+            }
+            
+            res = requests.post(tg_url, json=payload)
+            
+            if res.status_code == 200:
+                # Сразу записываем отправленные игры в базу данных, чтобы не дублировать
+                with open(TXT_FILE, "a", encoding="utf-8") as f:
+                    for g in chunk:
+                        f.write(f"{g['id']}\n")
+                print(f"Успешно опубликована пачка из {len(chunk)} игр.")
+            else:
+                print(f"Ошибка отправки пачки в ТГ: {res.text}")
     else:
-        print("Новых скидок со времени последней проверки не найдено.")
+        print("Новых скидок среди популярных игр не найдено.")
 
 if __name__ == "__main__":
     main()
