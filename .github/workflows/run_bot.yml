@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Клонируем репозиторий
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3 # Робот скачивает config.py и games_list.txt к себе на сервер
 
     - name: Устанавливаем Python
       uses: actions/setup-python@v4
