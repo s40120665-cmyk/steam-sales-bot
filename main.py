@@ -10,27 +10,40 @@ def main():
         print(f"Файл {LIST_FILE} не найден! Создайте его на GitHub.")
         return
 
-    # Читаем ваш персональный список игр
+    # Читаем ваш персональный список игр с защитой от пустых строк и опечаток
     target_games = {}
     with open(LIST_FILE, "r", encoding="utf-8") as f:
         for line in f:
-            if ":" in line:
-                app_id, name = line.strip().split(":", 1)
-                target_games[app_id.strip()] = name.strip()
+            cleaned_line = line.strip()
+            # Пропускаем пустые строки
+            if not cleaned_line:
+                continue
+            # Проверяем наличие двоеточия
+            if ":" in cleaned_line:
+                try:
+                    app_id, name = cleaned_line.split(":", 1)
+                    target_games[app_id.strip()] = name.strip()
+                except Exception as e:
+                    print(f"Пропущена некорректная строка: {cleaned_line}. Ошибка: {e}")
 
     if not target_games:
-        print("Список игр в games_list.txt пуст.")
+        print("Список игр в games_list.txt пуст или заполнен неверно.")
         return
 
     # Собираем все ID игр в одну строку для пакетного запроса к Steam
     app_ids_str = ",".join(target_games.keys())
 
-    # 2. Делаем единый запрос цены, собирая адрес ИЗ КОНФИГА
+    # 2. Делаем единый запрос цены ИЗ КОНФИГА
     price_url = config.STEAM_PRICE_API_BASE + app_ids_str + "&cc=kz&filters=price_overview"
     try:
         response = requests.get(price_url, timeout=15).json()
     except Exception as e:
         print("Ошибка запроса к Steam:", e)
+        return
+
+    # Если Steam вернул пустой ответ или заблокировал запрос
+    if not response:
+        print("Steam вернул пустой ответ. Возможно, временное ограничение.")
         return
 
     bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
@@ -42,7 +55,7 @@ def main():
     for app_id, custom_name in target_games.items():
         game_data = response.get(app_id, {})
         
-        if game_data.get("success"):
+        if game_data and game_data.get("success"):
             price_info = game_data.get("data", {}).get("price_overview", {})
             
             if price_info:
@@ -91,7 +104,7 @@ def main():
             else:
                 print("Ошибка отправки в ТГ:", res.text)
     else:
-        print("В данный момент скидок на игры из вашего списка нет.")
+        print("В данный момент скидок на игры из вашего списка нет. Бот проверил, но акций не найдено.")
 
 if __name__ == "__main__":
     main()
