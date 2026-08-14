@@ -13,4 +13,4 @@ TELEGRAM_API_BASE="https://api.telegram.org/bot"
 STEAM_PRICE_API_BASE="https://store.steampowered.com/api/appdetails?appids="
 
 # 5. Базовый адрес для картинок-обложек игр Steam
-STEAM_IMAGE_BASE="https://shared.akamai.steamstatic.com/store_images/steam/apps/"
+STEAM_IMAGE_BASE="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/"
