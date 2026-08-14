@@ -2,15 +2,19 @@ name: Steam Sales Bot
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Запуск каждые 30 минут автоматически
-  workflow_dispatch: # Позволяет запускать бота вручную кнопкой
+    - cron: '*/30 * * * *' # Автозапуск каждые 30 минут
+  workflow_dispatch: # Кнопка ручного запуска
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Явное разрешение для Actions записывать файлы в репозиторий
     steps:
     - name: Клонируем репозиторий
       uses: actions/checkout@v3
+      with:
+        persist-credentials: true
 
     - name: Устанавливаем Python
       uses: actions/setup-python@v4
