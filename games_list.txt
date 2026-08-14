@@ -12,6 +12,7 @@
 252490: Rust
 346110: ARK Survival Evolved
 292030: The Witcher 3 Wild Hunt
+124923: The Witcher 3: Wild Hunt — Complete Edition
 251570: 7 Days to Die
 105600: Terraria
 218620: PAYDAY 2
@@ -22,21 +23,50 @@
 582010: Monster Hunter World
 1151640: Horizon Zero Dawn
 1190460: Death Stranding
+3280350: DEATH STRANDING 2 ON THE BEACH
 1282100: Resident Evil Village
+3764200: Resident Evil Requiem
+2050650: Resident Evil 4
+883710: Resident Evil 2
+21690: Resident Evil 5
+221040: Resident Evil 6
+952060: Resident Evil 3
+222480: Resident Evil Revelations
 1235140: Yakuza Like a Dragon
 1794680: Vampire Survivors
+3265700: Vampire Crawlers The Turbo Wildcard from Vampire Survivors
 1326470: Sons Of The Forest
 1593500: God of War
 1817070: Marvels Spider-Man Remastered
 1142710: Total War WARHAMMER III
+364360: Total War WARHAMMER
+594570: Total War WARHAMMER II
 1446780: Monster Hunter Rise
 1604030: V Rising
 552500: Warhammer Vermintide 2
+235540: Warhammer End Times - Vermintide
 311210: Call of Duty Black Ops III
+4435490: Call of Duty Modern Warfare 4
+476600: Call of Duty WWII
+3595230: Call of Duty Modern Warfare II
+2000950: Call of Duty Modern Warfare
+292730: Call of Duty Infinite Warfare
+3606480: Call of Duty Black Ops 7
+1985820: Call of Duty Vanguard
+4384550: Call of Duty Black Ops 6
+1985810: Call of Duty Black Ops Cold War
+209650: Call of Duty Advanced Warfare - Gold_Edition
+393080: Call of Duty Modern Warfare Remastered 2017
 374320: DARK SOULS III
+236430: DARK SOULS II
+570940: DARK SOULS REMASTERED
+335300: DARK SOULS II Scholar of the First Sin
 648350: Jurassic World Evolution
+1244460: Jurassic World Evolution 2
+2958130: Jurassic World Evolution 3
 227300: Euro Truck Simulator 2
 244210: Assetto Corsa
+805550: Assetto Corsa Competizione
 281990: Stellaris
 391220: Rise of the Tomb Raider
 489830: The Elder Scrolls V Skyrim Special Edition
