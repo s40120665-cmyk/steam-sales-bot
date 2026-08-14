@@ -9,12 +9,10 @@ jobs:
   run-bot:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Явное разрешение для Actions записывать файлы в репозиторий
+      contents: write
     steps:
     - name: Клонируем репозиторий
       uses: actions/checkout@v3
-      with:
-        persist-credentials: true
 
     - name: Устанавливаем Python
       uses: actions/setup-python@v4
@@ -32,7 +30,7 @@ jobs:
 
     - name: Сохраняем изменения в базу данных GitHub
       run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
         git add posted_games.txt
-        git diff --quiet && git diff --staged --quiet || (git commit -m "🤖 Обновление базы данных скидок" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "🤖 Обновление базы данных" && git push)
