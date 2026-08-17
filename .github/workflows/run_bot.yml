@@ -2,7 +2,8 @@ name: Steam Sales Bot
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    # Запуск каждый день в 15:00 UTC (это ровно 18:00 по МСК)
+    - cron: '0 15 * * *'
   workflow_dispatch:
 
 jobs:
