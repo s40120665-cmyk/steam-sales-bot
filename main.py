@@ -1,9 +1,11 @@
 import os
 import requests
 import time
+import json
 import config
 
 def get_price_for_region(app_id, region_code):
+    """Вспомогательная функция для безопасного запроса цены в конкретном регионе"""
     url = f"{config.STEAM_PRICE_API_BASE}{app_id}&cc={region_code}"
     try:
         res = requests.get(url, timeout=10).json()
@@ -22,6 +24,39 @@ def get_price_for_region(app_id, region_code):
         pass
     return None, None, 0
 
+def send_tg_message(token, chat_id, text):
+    """Отправка текстового сообщения в ТГ и возврат его message_id"""
+    url = f"{config.TELEGRAM_API_BASE}{token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown", "disable_web_page_preview": True}
+    try:
+        res = requests.post(url, json=payload).json()
+        return res.get("result", {}).get("message_id")
+    except:
+        return None
+
+def delete_tg_message(token, chat_id, message_id):
+    """Удаление сообщения по его ID"""
+    url = f"{config.TELEGRAM_API_BASE}{token}/deleteMessage"
+    try:
+        requests.post(url, json={"chat_id": chat_id, "message_id": message_id})
+    except:
+        pass
+
+def check_admin_commands(token, admin_id):
+    """Проверка наличия команды /update от админа в ЛС бота"""
+    url = f"{config.TELEGRAM_API_BASE}{token}/getUpdates"
+    try:
+        updates = requests.get(url, timeout=10).json().get("result", [])
+        for u in reversed(updates):
+            msg = u.get("message", {})
+            if str(msg.get("from", {}).get("id")) == str(admin_id):
+                text = msg.get("text", "").strip()
+                if text == "/update":
+                    return True
+    except:
+        pass
+    return False
+
 def generate_html(games):
     """Генерация прокачанного сайта с поиском, сортировкой и серыми карточками без скидок"""
     html_start = """<!DOCTYPE html>
@@ -33,27 +68,18 @@ def generate_html(games):
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #fff; margin-bottom: 20px; font-weight: 600; }
-        
-        /* Стили для поиска */
         .search-container { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: center; }
-        #search-input { width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s; }
-        #search-input:focus { border-color: #66c0f4; }
-
+        #search-input { width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; }
         .table-container { max-width: 1000px; margin: 0 auto; background: #162231; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233c51; }
         th { background-color: #1f334b; color: #66c0f4; font-weight: bold; }
-        
-        /* Эффект затухания для игр без скидки */
         .no-discount-row { opacity: 0.5; transition: opacity 0.3s; }
         .no-discount-row:hover { opacity: 0.9; }
         tr:hover { background-color: #213143; }
-        
         img { width: 120px; border-radius: 4px; display: block; }
         a { color: #66c0f4; text-decoration: none; font-weight: bold; }
         a:hover { text-decoration: underline; }
-        
-        /* Цветовые плашки скидок */
         .discount-cell { font-weight: bold; text-align: center; border-radius: 4px; padding: 6px 10px; color: #fff; display: inline-block; min-width: 45px; }
         .discount-high { background-color: #4CAF50; }
         .discount-medium { background-color: #ff9800; }
@@ -63,11 +89,9 @@ def generate_html(games):
 </head>
 <body>
     <h1>🎮 Мониторинг цен Steam (Казахстан / РФ / США)</h1>
-    
     <div class="search-container">
         <input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()">
     </div>
-
     <div class="table-container">
         <table id="games-table">
             <thead>
@@ -82,19 +106,16 @@ def generate_html(games):
             </thead>
             <tbody>
 """
-    
     html_end = """
             </tbody>
         </table>
     </div>
-
     <script>
     function filterGames() {
         var input = document.getElementById("search-input");
         var filter = input.value.toLowerCase();
         var table = document.getElementById("games-table");
         var tr = table.getElementsByTagName("tr");
-
         for (var i = 1; i < tr.length; i++) {
             var tdName = tr[i].getElementsByTagName("td");
             if (tdName) {
@@ -142,13 +163,13 @@ def generate_html(games):
         table_rows.append(row)
         
     full_html = html_start + "\n".join(table_rows) + html_end
-    
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(full_html)
     print("Сайт index.html успешно обновлен.")
 
 def main():
     LIST_FILE = "games_list.txt"
+    HISTORY_FILE = "history.json"
     if not os.path.exists(LIST_FILE): return
 
     target_games = {}
@@ -165,12 +186,31 @@ def main():
 
     bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
     channel_id = os.environ["TELEGRAM_CHANNEL_ID"]
-    
+    admin_id = os.environ.get("ADMIN_TELEGRAM_ID")
+
+    old_history = {}
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f: old_history = json.load(f)
+        except: pass
+
+    # Проверяем команду /update от админа в ЛС
+    force_update = False
+    if admin_id:
+        force_update = check_admin_commands(bot_token, admin_id)
+        if force_update:
+            send_tg_message(bot_token, admin_id, "🤖 *Команда /update принята!* Начинаю полную очистку канала и перезапись...")
+            if "posted_messages" in old_history:
+                for m_id in old_history["posted_messages"]:
+                    delete_tg_message(bot_token, channel_id, m_id)
+                old_history["posted_messages"] = []
+
     all_games_data = []
     tg_games_to_post = []
+    admin_reports = []
+    new_history_data = {}
 
-    print(f"Запуск полной проверки цен. Всего игр в списке: {len(target_games)}")
-    
+    print(f"Запуск проверки цен. Всего игр: {len(target_games)}")
     for app_id, custom_name in target_games.items():
         kz_price, kz_initial, discount = get_price_for_region(app_id, "kz")
         time.sleep(0.5)
@@ -182,13 +222,8 @@ def main():
             time.sleep(0.5)
             
             kz_text = f"{kz_price} ₸" if isinstance(kz_price, int) else "н/д"
-            if kz_price == "Бесплатно": kz_text = "Бесплатно"
-            
             ru_text = f"{ru_price} ₽" if isinstance(ru_price, int) else "не доступна в РФ ❌"
-            if ru_price == "Бесплатно": ru_text = "Бесплатно"
-                
             us_text = f"${us_price}" if isinstance(us_price, int) else "н/д"
-            if us_price == "Бесплатно": us_text = "Бесплатно"
 
             game_entry = {
                 "id": app_id,
@@ -199,25 +234,45 @@ def main():
                 "price_us": us_text
             }
             all_games_data.append(game_entry)
-            
+            new_history_data[app_id] = discount
+
+            # Сравниваем старую скидку с новой для подробного отчета
+            old_discount = old_history.get("discounts", {}).get(app_id, 0)
+            if discount != old_discount:
+                if old_discount == 0 and discount > 0:
+                    admin_reports.append(f"🟢 *Новая скидка!* {custom_name}: появился дисконт -{discount}%")
+                elif old_discount > 0 and discount == 0:
+                    admin_reports.append(f"🔴 *Скидка кончилась!* {custom_name}: цена вернулась к обычной (0%)")
+                else:
+                    admin_reports.append(f"&amp;#128993; *Изменение скидки!* {custom_name}: было -{old_discount}%, стало -{discount}%")
+
             if discount > 0:
                 tg_games_to_post.append(game_entry)
 
-    # На сайт выкатываем всё (сначала скидки, потом обычные цены)
     all_games_data.sort(key=lambda x: x['discount'], reverse=True)
     generate_html(all_games_data)
 
-    # 4. Публикация ВДОЛЬ ВСЕХ игр со скидками в Телеграм пачками по 10 штук
-    if tg_games_to_post:
-        # Сортируем скидки от больших к меньшим для красивого отображения в постах
+    # Отправляем отчет админу в ЛС
+    if admin_id:
+        if admin_reports:
+            report_text = "📊 **ОТЧЕТ ОБ ИЗМЕНЕНИИ СКИДОК:**\n\n" + "\n".join(admin_reports)
+            send_tg_message(bot_token, admin_id, report_text)
+        elif force_update:
+            send_tg_message(bot_token, admin_id, "♻️ Канал успешно перезаписан. Изменений нет.")
+        else:
+            send_tg_message(bot_token, admin_id, "🔎 *Проверка завершена:* Изменений нет.")
+
+    new_posted_messages = old_history.get("posted_messages", [])
+    
+    if tg_games_to_post and (admin_reports or force_update or not new_posted_messages):
+        if admin_reports and not force_update:
+            for m_id in new_posted_messages: delete_tg_message(bot_token, channel_id, m_id)
+            new_posted_messages = []
+
         tg_games_to_post.sort(key=lambda x: x['discount'], reverse=True)
-        
         chunk_size = 10
-        total_posted = 0
-        
         for i in range(0, len(tg_games_to_post), chunk_size):
             chunk = tg_games_to_post[i:i + chunk_size]
-            
             message_lines = ["🔥 **АКТУАЛЬНЫЕ РАСПРОДАЖИ В STEAM**\n"]
             for g in chunk:
                 game_link = config.STEAM_STORE_APP_BASE + g['id']
@@ -228,23 +283,13 @@ def main():
                 message_lines.append(line)
             
             full_text = "\n".join(message_lines)
-            tg_url = config.TELEGRAM_API_BASE + bot_token + "/sendMessage"
-            payload = {
-                "chat_id": channel_id,
-                "text": full_text,
-                "parse_mode": "Markdown",
-                "disable_web_page_preview": True
-            }
-            
-            res = requests.post(tg_url, json=payload)
-            if res.status_code == 200:
-                total_posted += len(chunk)
-                # Микропауза между отправками постов, чтобы избежать блокировок флуд-контроля Telegram
-                time.sleep(1) 
-                
-        print(f"Успешно опубликованы абсолютно все активные скидки. Всего игр: {total_posted}")
-    else:
-        print("Активных скидок среди игр не обнаружено. Посты в ТГ не отправлялись.")
+            m_id = send_tg_message(bot_token, channel_id, full_text)
+            if m_id: new_posted_messages.append(m_id)
+            time.sleep(1)
+
+    history_payload = {"discounts": new_history_data, "posted_messages": new_posted_messages}
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(history_payload, f, ensure_ascii=False, indent=4)
 
 if __name__ == "__main__":
     main()
