@@ -106,7 +106,7 @@ def generate_html(games):
             </thead>
             <tbody>
 """
-    html_end = """
+        html_end = """
             </tbody>
         </table>
     </div>
@@ -119,7 +119,7 @@ def generate_html(games):
         for (var i = 1; i < tr.length; i++) {
             var tdName = tr[i].getElementsByTagName("td");
             if (tdName) {
-                var txtValue = tdName[1].textContent || tdName[1].innerText;
+                var txtValue = tdName.textContent || tdName.innerText;
                 if (txtValue.toLowerCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
@@ -167,6 +167,26 @@ def generate_html(games):
         f.write(full_html)
     print("Сайт index.html успешно обновлен.")
 
+def send_tg_with_buttons(token, chat_id, text):
+    """Специальная функция отправки админу сообщения с кнопками пульта управления"""
+    url = f"{config.TELEGRAM_API_BASE}{token}/sendMessage"
+    reply_markup = {
+        "keyboard": [
+            [{"text": "🔄 Проверить скидки и отчет"}],
+            [{"text": "🛠️ Проверить статус системы"}]
+        ],
+        "resize_keyboard": True
+    }
+    payload = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": True,
+        "reply_markup": reply_markup
+    }
+    try: requests.post(url, json=payload)
+    except: pass
+
 def main():
     LIST_FILE = "games_list.txt"
     HISTORY_FILE = "history.json"
@@ -194,16 +214,13 @@ def main():
             with open(HISTORY_FILE, "r", encoding="utf-8") as f: old_history = json.load(f)
         except: pass
 
-    # Проверяем команду /update от админа в ЛС
-    force_update = False
-    if admin_id:
-        force_update = check_admin_commands(bot_token, admin_id)
-        if force_update:
-            send_tg_message(bot_token, admin_id, "🤖 *Команда /update принята!* Начинаю полную очистку канала и перезапись...")
-            if "posted_messages" in old_history:
-                for m_id in old_history["posted_messages"]:
-                    delete_tg_message(bot_token, channel_id, m_id)
-                old_history["posted_messages"] = []
+    # Проверяем, запускался ли скрипт в режиме принудительного обновления канала
+    force_update = os.environ.get("FORCE_UPDATE") == "true"
+    if force_update and admin_id:
+        if "posted_messages" in old_history:
+            for m_id in old_history["posted_messages"]:
+                delete_tg_message(bot_token, channel_id, m_id)
+            old_history["posted_messages"] = []
 
     all_games_data = []
     tg_games_to_post = []
@@ -236,7 +253,6 @@ def main():
             all_games_data.append(game_entry)
             new_history_data[app_id] = discount
 
-            # Сравниваем старую скидку с новой для подробного отчета
             old_discount = old_history.get("discounts", {}).get(app_id, 0)
             if discount != old_discount:
                 if old_discount == 0 and discount > 0:
@@ -244,7 +260,7 @@ def main():
                 elif old_discount > 0 and discount == 0:
                     admin_reports.append(f"🔴 *Скидка кончилась!* {custom_name}: цена вернулась к обычной (0%)")
                 else:
-                    admin_reports.append(f"&amp;#128993; *Изменение скидки!* {custom_name}: было -{old_discount}%, стало -{discount}%")
+                    admin_reports.append(f"🟡 *Изменение скидки!* {custom_name}: было -{old_discount}%, стало -{discount}%")
 
             if discount > 0:
                 tg_games_to_post.append(game_entry)
@@ -252,15 +268,15 @@ def main():
     all_games_data.sort(key=lambda x: x['discount'], reverse=True)
     generate_html(all_games_data)
 
-    # Отправляем отчет админу в ЛС
+    # Отправляем отчет админу в ЛС вместе с обновлением кнопок пульта
     if admin_id:
         if admin_reports:
             report_text = "📊 **ОТЧЕТ ОБ ИЗМЕНЕНИИ СКИДОК:**\n\n" + "\n".join(admin_reports)
-            send_tg_message(bot_token, admin_id, report_text)
+            send_tg_with_buttons(bot_token, admin_id, report_text)
         elif force_update:
-            send_tg_message(bot_token, admin_id, "♻️ Канал успешно перезаписан. Изменений нет.")
+            send_tg_with_buttons(bot_token, admin_id, "♻️ *Канал успешно очищен и перезаписан!* Изменений в скидках со времени прошлой проверки нет.")
         else:
-            send_tg_message(bot_token, admin_id, "🔎 *Проверка завершена:* Изменений нет.")
+            send_tg_with_buttons(bot_token, admin_id, "🔎 *Проверка завершена:* Изменений в скидках нет, база стабильна.")
 
     new_posted_messages = old_history.get("posted_messages", [])
     
