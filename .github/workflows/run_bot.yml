@@ -2,15 +2,19 @@ name: Steam Sales Bot
 
 on:
   schedule:
-    # Запуск каждый день в 15:00 UTC (это ровно 18:00 по МСК)
-    - cron: '0 15 * * *'
+    - cron: '*/30 * * * *' # Автозапуск каждые 30 минут
   workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Принудительная очистка канала'
+        required: false
+        default: 'false'
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Даем право записывать index.html на GitHub
+      contents: write
     steps:
     - name: Клонируем репозиторий
       uses: actions/checkout@v3
@@ -23,15 +27,18 @@ jobs:
     - name: Устанавливаем библиотеки
       run: pip install requests
 
-    - name: Запускаем бота
+    - name: Запускаем проверку цен и пульт
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+        ADMIN_TELEGRAM_ID: ${{ secrets.ADMIN_TELEGRAM_ID }}
+        PERSONAL_GH_TOKEN: ${{ secrets.PERSONAL_GH_TOKEN }}
+        FORCE_UPDATE: ${{ github.event.inputs.force_update }}
       run: python main.py
 
-    - name: Публикуем сайт на GitHub
+    - name: Сохраняем историю и сайт на GitHub
       run: |
         git config --global user.name "GitHub Action"
         git config --global user.email "action@github.com"
         git add index.html history.json
-        git diff --quiet && git diff --staged --quiet || (git commit -m "🌐 Обновление сайта скидок" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "🌐 Синхронизация базы и сайта" && git push)
