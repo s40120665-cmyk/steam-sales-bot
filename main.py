@@ -71,7 +71,8 @@ def run_diagnostics(token, channel_id):
 def check_admin_inline_commands(token, admin_id, gh_token, repo):
     url = f"{config.TELEGRAM_API_BASE}{token}/getUpdates?timeout=1"
     try:
-        updates = requests.get(url, timeout=5).json().get("result", [])
+        res = requests.get(url, timeout=5).json()
+        updates = res.get("result", []) if isinstance(res, dict) else []
         for u in reversed(updates):
             msg = u.get("message", {})
             if str(msg.get("from", {}).get("id")) == str(admin_id):
@@ -90,8 +91,8 @@ def check_admin_inline_commands(token, admin_id, gh_token, repo):
                     return "stop"
     except: pass
     return "run"
-
 def generate_html(games):
+    """Генерация прокачанного сайта с поиском, сортировкой и серыми карточками без скидок"""
     html_start = """<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -124,7 +125,8 @@ def generate_html(games):
     <h1>🎮 Мониторинг цен Steam (Казахстан / РФ / США)</h1>
     <div class="search-container"><input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()"></div>
     <div class="table-container"><table id="games-table"><thead><tr><th>Обложка</th><th>Название игры</th><th style="text-align:center;">Скидка</th><th>Цена КЗ</th><th>Цена РФ</th><th>Цена США</th></tr></thead><tbody>"""
-        html_end = """</tbody></table></div>
+    
+    html_end = """</tbody></table></div>
     <script>
     function filterGames() {
         var filter = document.getElementById("search-input").value.toLowerCase();
@@ -172,7 +174,6 @@ def main():
     gh_token = os.environ.get("PERSONAL_GH_TOKEN")
     repo = os.environ.get("GITHUB_REPOSITORY")
 
-    # 1. Проверяем новые нажатия кнопок перед запуском тяжелого парсера
     if admin_id:
         action = check_admin_inline_commands(bot_token, admin_id, gh_token, repo)
         if action == "stop":
@@ -266,4 +267,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
