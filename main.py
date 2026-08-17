@@ -55,10 +55,10 @@ def generate_html(games):
         
         /* Цветовые плашки скидок */
         .discount-cell { font-weight: bold; text-align: center; border-radius: 4px; padding: 6px 10px; color: #fff; display: inline-block; min-width: 45px; }
-        .discount-high { background-color: #4CAF50; } /* Зеленый от 70% */
-        .discount-medium { background-color: #ff9800; } /* Оранжевый от 50% до 70% (сделали оранжевым для лучшего контраста) */
-        .discount-low { background-color: #f44336; } /* Красный ниже 50% */
-        .discount-none { background-color: #4a5a6a; color: #a0a0a0; } /* Серый для 0% */
+        .discount-high { background-color: #4CAF50; }
+        .discount-medium { background-color: #ff9800; }
+        .discount-low { background-color: #f44336; }
+        .discount-none { background-color: #4a5a6a; color: #a0a0a0; }
     </style>
 </head>
 <body>
@@ -96,9 +96,9 @@ def generate_html(games):
         var tr = table.getElementsByTagName("tr");
 
         for (var i = 1; i < tr.length; i++) {
-            var tdName = tr[i].getElementsByTagName("td")[1];
+            var tdName = tr[i].getElementsByTagName("td");
             if (tdName) {
-                var txtValue = tdName.textContent || tdName.innerText;
+                var txtValue = tdName[1].textContent || tdName[1].innerText;
                 if (txtValue.toLowerCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
@@ -113,7 +113,6 @@ def generate_html(games):
     
     table_rows = []
     for g in games:
-        # Логика определения стиля плашки и строки
         if g['discount'] == 0:
             color_class = "discount-none"
             row_class = 'class="no-discount-row"'
@@ -124,7 +123,7 @@ def generate_html(games):
             if g['discount'] >= 70:
                 color_class = "discount-high"
             elif 50 <= g['discount'] < 70:
-                color_class = "discount-low" # В прошлом коде просили красный для средних, оставили логику, но поменялиcss класс для красоты
+                color_class = "discount-low"
             else:
                 color_class = "discount-medium"
             
@@ -170,21 +169,18 @@ def main():
     all_games_data = []
     tg_games_to_post = []
 
-    print(f"Запуск полной проверки цен для сайта. Всего игр в списке: {len(target_games)}")
+    print(f"Запуск полной проверки цен. Всего игр в списке: {len(target_games)}")
     
     for app_id, custom_name in target_games.items():
-        # Проверяем Казахстан
         kz_price, kz_initial, discount = get_price_for_region(app_id, "kz")
         time.sleep(0.5)
         
         if kz_price is not None:
-            # Проверяем Россию и США
             ru_price, _, _ = get_price_for_region(app_id, "ru")
             time.sleep(0.5)
             us_price, _, _ = get_price_for_region(app_id, "us")
             time.sleep(0.5)
             
-            # Форматируем валюты
             kz_text = f"{kz_price} ₸" if isinstance(kz_price, int) else "н/д"
             if kz_price == "Бесплатно": kz_text = "Бесплатно"
             
@@ -204,22 +200,24 @@ def main():
             }
             all_games_data.append(game_entry)
             
-            # В Телеграм отбираем ТОЛЬКО новые активные скидки (чтобы не спамить обычными ценами)
             if discount > 0:
                 tg_games_to_post.append(game_entry)
-                print(f"Найдена активная скидка на {custom_name}: -{discount}%")
 
-    # Сортируем игры для сайта: сначала максимальные скидки, игры без скидок (0%) падают вниз
+    # На сайт выкатываем всё (сначала скидки, потом обычные цены)
     all_games_data.sort(key=lambda x: x['discount'], reverse=True)
-
-    # Всегда генерируем сайт (даже если скидок 0%, выведутся серые карточки)
     generate_html(all_games_data)
 
-    # 4. Публикация сборного поста в Телеграм (только если появились новые скидки)
+    # 4. Публикация ВДОЛЬ ВСЕХ игр со скидками в Телеграм пачками по 10 штук
     if tg_games_to_post:
+        # Сортируем скидки от больших к меньшим для красивого отображения в постах
+        tg_games_to_post.sort(key=lambda x: x['discount'], reverse=True)
+        
         chunk_size = 10
+        total_posted = 0
+        
         for i in range(0, len(tg_games_to_post), chunk_size):
             chunk = tg_games_to_post[i:i + chunk_size]
+            
             message_lines = ["🔥 **АКТУАЛЬНЫЕ РАСПРОДАЖИ В STEAM**\n"]
             for g in chunk:
                 game_link = config.STEAM_STORE_APP_BASE + g['id']
@@ -237,7 +235,16 @@ def main():
                 "parse_mode": "Markdown",
                 "disable_web_page_preview": True
             }
-            requests.post(tg_url, json=payload)
+            
+            res = requests.post(tg_url, json=payload)
+            if res.status_code == 200:
+                total_posted += len(chunk)
+                # Микропауза между отправками постов, чтобы избежать блокировок флуд-контроля Telegram
+                time.sleep(1) 
+                
+        print(f"Успешно опубликованы абсолютно все активные скидки. Всего игр: {total_posted}")
+    else:
+        print("Активных скидок среди игр не обнаружено. Посты в ТГ не отправлялись.")
 
 if __name__ == "__main__":
     main()
