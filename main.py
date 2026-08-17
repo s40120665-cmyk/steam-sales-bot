@@ -91,41 +91,6 @@ def check_admin_inline_commands(token, admin_id, gh_token, repo):
                     return "stop"
     except: pass
     return "run"
-def generate_html(games):
-    """Генерация прокачанного сайта с поиском, сортировкой и серыми карточками без скидок"""
-    html_start = """<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мониторинг цен Steam</title>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; }
-        h1 { text-align: center; color: #fff; margin-bottom: 20px; font-weight: 600; }
-        .search-container { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: center; }
-        #search-input { width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; }
-        .table-container { max-width: 1000px; margin: 0 auto; background: #162231; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233c51; }
-        th { background-color: #1f334b; color: #66c0f4; font-weight: bold; }
-        .no-discount-row { opacity: 0.5; transition: opacity 0.3s; }
-        .no-discount-row:hover { opacity: 0.9; }
-        tr:hover { background-color: #213143; }
-        img { width: 120px; border-radius: 4px; display: block; }
-        a { color: #66c0f4; text-decoration: none; font-weight: bold; }
-        a:hover { text-decoration: underline; }
-        .discount-cell { font-weight: bold; text-align: center; border-radius: 4px; padding: 6px 10px; color: #fff; display: inline-block; min-width: 45px; }
-        .discount-high { background-color: #4CAF50; }
-        .discount-medium { background-color: #ff9800; }
-        .discount-low { background-color: #f44336; }
-        .discount-none { background-color: #4a5a6a; color: #a0a0a0; }
-    </style>
-</head>
-<body>
-    <h1>🎮 Мониторинг цен Steam (Казахстан / РФ / США)</h1>
-    <div class="search-container"><input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()"></div>
-    <div class="table-container"><table id="games-table"><thead><tr><th>Обложка</th><th>Название игры</th><th style="text-align:center;">Скидка</th><th>Цена КЗ</th><th>Цена РФ</th><th>Цена США</th></tr></thead><tbody>"""
-    
     html_end = """</tbody></table></div>
     <script>
     function filterGames() {
@@ -174,6 +139,7 @@ def main():
     gh_token = os.environ.get("PERSONAL_GH_TOKEN")
     repo = os.environ.get("GITHUB_REPOSITORY")
 
+    # 1. Проверяем новые нажатия кнопок перед запуском тяжелого парсера
     if admin_id:
         action = check_admin_inline_commands(bot_token, admin_id, gh_token, repo)
         if action == "stop":
@@ -204,32 +170,58 @@ def main():
 
     all_games_data, tg_games_to_post, admin_reports, new_history_data = [], [], [], {}
 
-    print(f"Запуск полной проверки цен. Всего игр: {len(target_games)}")
+    print(f"Запуск гарантированной проверки цен. Всего игр: {len(target_games)}")
     for app_id, custom_name in target_games.items():
-        kz_price, kz_initial, discount = get_price_for_region(app_id, "kz")
-        time.sleep(0.5)
+        kz_price, kz_initial, discount = None, None, 0
         
-        if kz_price is not None:
-            ru_price, _, _ = get_price_for_region(app_id, "ru")
-            time.sleep(0.5)
-            us_price, _, _ = get_price_for_region(app_id, "us")
-            time.sleep(0.5)
+        # Умная система повторных попыток (до 3 раз), если Steam завис или смолчал
+        for attempt in range(3):
+            kz_price, kz_initial, discount = get_price_for_region(app_id, "kz")
+            if kz_price is not None:
+                break # Успешно получили данные, выходим из цикла попыток
+            time.sleep(1.5) # Если была ошибка, ждем подольше перед повтором
             
-            kz_text = f"{kz_price} ₸" if isinstance(kz_price, int) else "н/д"
-            ru_text = f"{ru_price} ₽" if isinstance(ru_price, int) else "не доступна в РФ ❌"
-            us_text = f"${us_price}" if isinstance(us_price, int) else "н/д"
+        # Если даже после 3 попыток регион КЗ недоступен, ставим заглушку, но НЕ пропускаем игру для сайта
+        if kz_price is None:
+            kz_text = "н/д"
+            ru_text = "н/д"
+            us_text = "н/д"
+            discount = 0
+        else:
+            kz_text = f"{kz_price} ₸" if isinstance(kz_price, int) else "Бесплатно"
+            ru_text = "не доступна в РФ ❌"
+            us_text = "н/д"
+            
+            # Запрашиваем РФ и США ТОЛЬКО если у игры есть активная скидка в КЗ
+            if discount > 0:
+                for attempt in range(3):
+                    ru_price, _, _ = get_price_for_region(app_id, "ru")
+                    if ru_price is not None:
+                        ru_text = f"{ru_price} ₽" if isinstance(ru_price, int) else "Бесплатно"
+                        break
+                    time.sleep(1)
+                    
+                for attempt in range(3):
+                    us_price, _, _ = get_price_for_region(app_id, "us")
+                    if us_price is not None:
+                        us_text = f"${us_price}" if isinstance(us_price, int) else "Бесплатно"
+                        break
+                    time.sleep(1)
+        
+        # Делаем базовую микропаузу между играми
+        time.sleep(0.8)
 
-            game_entry = {"id": app_id, "name": custom_name, "discount": discount, "price_kz": kz_text, "price_ru": ru_text, "price_us": us_text}
-            all_games_data.append(game_entry)
-            new_history_data[app_id] = discount
+        game_entry = {"id": app_id, "name": custom_name, "discount": discount, "price_kz": kz_text, "price_ru": ru_text, "price_us": us_text}
+        all_games_data.append(game_entry)
+        new_history_data[app_id] = discount
 
-            old_discount = old_history.get("discounts", {}).get(app_id, 0)
-            if discount != old_discount:
-                if old_discount == 0 and discount > 0: admin_reports.append(f"🟢 *Новая скидка!* {custom_name}: появился дисконт -{discount}%")
-                elif old_discount > 0 and discount == 0: admin_reports.append(f"🔴 *Скидка кончилась!* {custom_name}: цена вернулась к обычной")
-                else: admin_reports.append(f"🟡 *Изменение скидки!* {custom_name}: было -{old_discount}%, стало -{discount}%")
+        old_discount = old_history.get("discounts", {}).get(app_id, 0)
+        if discount != old_discount:
+            if old_discount == 0 and discount > 0: admin_reports.append(f"🟢 *Новая скидка!* {custom_name}: появился дисконт -{discount}%")
+            elif old_discount > 0 and discount == 0: admin_reports.append(f"🔴 *Скидка кончилась!* {custom_name}: цена вернулась к обычной")
+            else: admin_reports.append(f"🟡 *Изменение скидки!* {custom_name}: было -{old_discount}%, стало -{discount}%")
 
-            if discount > 0: tg_games_to_post.append(game_entry)
+        if discount > 0: tg_games_to_post.append(game_entry)
 
     all_games_data.sort(key=lambda x: x['discount'], reverse=True)
     generate_html(all_games_data)
@@ -267,3 +259,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
