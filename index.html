@@ -7,41 +7,30 @@
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #fff; margin-bottom: 20px; font-weight: 600; }
-        
-        /* Стили для поиска */
         .search-container { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: center; }
-        #search-input { width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s; }
-        #search-input:focus { border-color: #66c0f4; }
-
+        #search-input { width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; }
         .table-container { max-width: 1000px; margin: 0 auto; background: #162231; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233c51; }
         th { background-color: #1f334b; color: #66c0f4; font-weight: bold; }
-        
-        /* Эффект затухания для игр без скидки */
         .no-discount-row { opacity: 0.5; transition: opacity 0.3s; }
         .no-discount-row:hover { opacity: 0.9; }
         tr:hover { background-color: #213143; }
-        
         img { width: 120px; border-radius: 4px; display: block; }
         a { color: #66c0f4; text-decoration: none; font-weight: bold; }
         a:hover { text-decoration: underline; }
-        
-        /* Цветовые плашки скидок */
         .discount-cell { font-weight: bold; text-align: center; border-radius: 4px; padding: 6px 10px; color: #fff; display: inline-block; min-width: 45px; }
-        .discount-high { background-color: #4CAF50; } /* Зеленый от 70% */
-        .discount-medium { background-color: #ff9800; } /* Оранжевый от 50% до 70% (сделали оранжевым для лучшего контраста) */
-        .discount-low { background-color: #f44336; } /* Красный ниже 50% */
-        .discount-none { background-color: #4a5a6a; color: #a0a0a0; } /* Серый для 0% */
+        .discount-high { background-color: #4CAF50; }
+        .discount-medium { background-color: #ff9800; }
+        .discount-low { background-color: #f44336; }
+        .discount-none { background-color: #4a5a6a; color: #a0a0a0; }
     </style>
 </head>
 <body>
     <h1>🎮 Мониторинг цен Steam (Казахстан / РФ / США)</h1>
-    
     <div class="search-container">
         <input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()">
     </div>
-
     <div class="table-container">
         <table id="games-table">
             <thead>
@@ -123,9 +112,9 @@
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/730" target="_blank">Counter-Strike 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>Бесплатно</td>
-                    <td>Бесплатно</td>
-                    <td>Бесплатно</td>
+                    <td>н/д</td>
+                    <td>не доступна в РФ ❌</td>
+                    <td>н/д</td>
                 </tr>
 
                 <tr class="no-discount-row">
@@ -186,18 +175,18 @@
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/570/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/570" target="_blank">Dota 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>Бесплатно</td>
-                    <td>Бесплатно</td>
-                    <td>Бесплатно</td>
+                    <td>н/д</td>
+                    <td>не доступна в РФ ❌</td>
+                    <td>н/д</td>
                 </tr>
 
                 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/440/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/440" target="_blank">Team Fortress 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>Бесплатно</td>
-                    <td>Бесплатно</td>
-                    <td>Бесплатно</td>
+                    <td>н/д</td>
+                    <td>не доступна в РФ ❌</td>
+                    <td>н/д</td>
                 </tr>
 
                 <tr class="no-discount-row">
@@ -656,23 +645,39 @@
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
                     <td>9000 ₸</td>
                     <td>не доступна в РФ ❌</td>
+                    <td>$29</td>
+                </tr>
+
+                <tr class="no-discount-row">
+                    <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/489830/header.jpg" alt="logo"></td>
+                    <td><a href="https://store.steampowered.com/app/489830" target="_blank">The Elder Scrolls V Skyrim Special Edition</a></td>
+                    <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
+                    <td>9999 ₸</td>
+                    <td>не доступна в РФ ❌</td>
+                    <td>$39</td>
+                </tr>
+
+                <tr class="no-discount-row">
+                    <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/582660/header.jpg" alt="logo"></td>
+                    <td><a href="https://store.steampowered.com/app/582660" target="_blank">Black Desert</a></td>
+                    <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
+                    <td>1900 ₸</td>
+                    <td>не доступна в РФ ❌</td>
                     <td>н/д</td>
                 </tr>
             </tbody>
         </table>
     </div>
-
     <script>
     function filterGames() {
         var input = document.getElementById("search-input");
         var filter = input.value.toLowerCase();
         var table = document.getElementById("games-table");
         var tr = table.getElementsByTagName("tr");
-
         for (var i = 1; i < tr.length; i++) {
-            var tdName = tr[i].getElementsByTagName("td")[1];
+            var tdName = tr[i].getElementsByTagName("td");
             if (tdName) {
-                var txtValue = tdName.textContent || tdName.innerText;
+                var txtValue = tdName[1].textContent || tdName[1].innerText;
                 if (txtValue.toLowerCase().indexOf(filter) > -1) {
                     tr[i].style.display = "";
                 } else {
