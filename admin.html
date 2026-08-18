@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пульт управления Ботом</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
+        h2 { color: #fff; margin-bottom: 20px; text-align: center; }
+        .btn { width: 100%; max-width: 280px; padding: 15px; margin: 10px 0; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; color: #fff; cursor: pointer; transition: background 0.2s, transform 0.1s; outline: none; }
+        .btn:active { transform: scale(0.98); }
+        .btn-blue { background-color: #66c0f4; }
+        .btn-blue:hover { background-color: #4da7db; }
+        .btn-orange { background-color: #ff9800; }
+        .btn-orange:hover { background-color: #e68a00; }
+        #status { margin-top: 20px; padding: 12px; border-radius: 6px; max-width: 280px; text-align: center; font-size: 14px; display: none; }
+        .success { background-color: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 1px solid #4CAF50; }
+        .error { background-color: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid #f44336; }
+    </style>
+</head>
+<body>
+
+    <h2>🎮 Управление Steam Sales Bot</h2>
+    
+    <button class="btn btn-blue" onclick="triggerAction(false)">🔄 Проверить скидки и отчет</button>
+    <button class="btn btn-orange" onclick="triggerAction(true)">♻️ Принудительный /update канала</button>
+
+    <div id="status"></div>
+
+    <script>
+        // ЗАПОЛНИ ЭТИ ДВЕ СТРОЧКИ СВОИМИ ДАННЫМИ:
+        const GH_TOKEN = "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";
+        const REPO = "s40120665-cmyk/steam-sales-bot"; 
+
+        function triggerAction(forceUpdate) {
+            const statusDiv = document.getElementById("status");
+            statusDiv.style.display = "block";
+            statusDiv.className = "";
+            statusDiv.innerText = "⏳ Отправка команды на GitHub...";
+
+            const url = `https://api.github.com/repos/${REPO}/actions/workflows/run_bot.yml/dispatches`;
+            
+            const payload = {
+                ref: "main",
+                inputs: { force_update: forceUpdate ? "true" : "false" }
+            };
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Authorization": `token ${GH_TOKEN}`,
+                    "Accept": "application/vnd.github.v3+json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (response.status === 204) {
+                    statusDiv.className = "success";
+                    statusDiv.innerText = "🚀 Команда успешно отправлена! Проверка запущена на сервере, ожидай отчет в ЛС через 1-2 минуты.";
+                } else {
+                    statusDiv.className = "error";
+                    statusDiv.innerText = `❌ Ошибка сервера (Код ${response.status})`;
+                }
+            })
+            .catch(error => {
+                statusDiv.className = "error";
+                statusDiv.innerText = "❌ Ошибка сети или неверный токен.";
+            });
+        }
+    </script>
+</body>
+</html>
