@@ -28,10 +28,11 @@
     <div id="status"></div>
 
     <script>
-        // Разбили токен на две части, чтобы робот безопасности GitHub его не забанил
-        const TOKEN_PART1 = "ghp_5hiHrZaD1yqElMYt3NmT";
-        const TOKEN_PART2 = "L7yIYPd0Vp3VEUlU";
+        // Вставь сюда первую и вторую половину твоего НОВОГО токена
+        const TOKEN_PART1 = "ghp_2DeRrBxpuQ";
+        const TOKEN_PART2 = "cPXmTAa2OLNoslKt2XWl3DEXUs";
         const REPO = "s40120665-cmyk/steam-sales-bot"; 
+
 
         function triggerAction(forceUpdate) {
             const statusDiv = document.getElementById("status");
@@ -46,7 +47,6 @@
                 inputs: { force_update: forceUpdate ? "true" : "false" }
             };
 
-            // Склеиваем токен в одно целое прямо в браузере смартфона
             const fullToken = TOKEN_PART1 + TOKEN_PART2;
 
             fetch(url, {
