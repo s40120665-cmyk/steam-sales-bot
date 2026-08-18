@@ -7,8 +7,16 @@
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #fff; margin-bottom: 20px; font-weight: 600; }
+        
+        /* Плашка статуса системы прямо на сайте */
+        .status-badge { max-width: 1000px; margin: 0 auto 20px auto; background: #162231; padding: 12px 20px; border-radius: 8px; border-left: 4px solid #66c0f4; font-size: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .status-badge span { font-weight: bold; }
+
+        /* Стили для поиска */
         .search-container { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: center; }
-        #search-input { width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; }
+        #search-input { width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s; }
+        #search-input:focus { border-color: #66c0f4; }
+
         .table-container { max-width: 1000px; margin: 0 auto; background: #162231; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233c51; }
@@ -28,8 +36,28 @@
 </head>
 <body>
     <h1>🎮 Мониторинг цен Steam (Казахстан / РФ / США)</h1>
-    <div class="search-container"><input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()"></div>
-    <div class="table-container"><table id="games-table"><thead><tr><th>Обложка</th><th>Название игры</th><th style="text-align:center;">Скидка</th><th>Цена КЗ</th><th>Цена РФ</th><th>Цена США</th></tr></thead><tbody><tr >
+    
+    <div class="status-badge">
+        <div>🛠️ Статус Telegram-канала: <span>✅ Активно (Бот в админах)</span></div>
+        <div style="color: #66c0f4;">Обновлено только что ⏱️</div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()">
+    </div>
+    <div class="table-container">
+        <table id="games-table">
+            <thead>
+                <tr>
+                    <th>Обложка</th>
+                    <th>Название игры</th>
+                    <th style="text-align:center;">Скидка</th>
+                    <th>Цена КЗ</th>
+                    <th>Цена РФ</th>
+                    <th>Цена США</th>
+                </tr>
+            </thead>
+            <tbody><tr >
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1142710/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1142710" target="_blank">Total War WARHAMMER III</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-high">-85%</span></td>
@@ -69,379 +97,403 @@
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/730" target="_blank">Counter-Strike 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>н/д</td><td>не доступна в РФ ❌</td><td>н/д</td>
+                    <td>Бесплатно</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/553850/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/553850" target="_blank">HELLDIVERS 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>16749 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>16749 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1245620/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1245620" target="_blank">Elden Ring</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>17999 ₸</td><td>3599 ₽</td><td>$59</td>
+                    <td>17999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1174180/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1174180" target="_blank">Red Dead Redemption 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>29999 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>29999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1091500/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1091500" target="_blank">Cyberpunk 2077</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>17999 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>17999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/3240220/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/3240220" target="_blank">Grand Theft Auto V Enhanced</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>14999 ₸</td><td>не доступна в РФ ❌</td><td>$29</td>
+                    <td>14999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1962700/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1962700" target="_blank">Subnautica 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>9770 ₸</td><td>1800 ₽</td><td>$29</td>
+                    <td>9770 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/3079210/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/3079210" target="_blank">Hell Let Loose Vietnam</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>9832 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>9832 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/570/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/570" target="_blank">Dota 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>н/д</td><td>не доступна в РФ ❌</td><td>н/д</td>
+                    <td>Бесплатно</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/440/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/440" target="_blank">Team Fortress 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>н/д</td><td>не доступна в РФ ❌</td><td>н/д</td>
+                    <td>Бесплатно</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/252490/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/252490" target="_blank">Rust</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>10500 ₸</td><td>1699 ₽</td><td>$39</td>
+                    <td>10500 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/346110/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/346110" target="_blank">ARK Survival Evolved</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>4100 ₸</td><td>550 ₽</td><td>$14</td>
+                    <td>4100 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/292030/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/292030" target="_blank">The Witcher 3 Wild Hunt</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>11999 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>11999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
+                </tr>
+<tr class="no-discount-row">
+                    <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/124923/header.jpg" alt="logo"></td>
+                    <td><a href="https://store.steampowered.com/app/124923" target="_blank">The Witcher 3: Wild Hunt — Complete Edition</a></td>
+                    <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
+                    <td>н/д</td><td>н/д</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/251570/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/251570" target="_blank">7 Days to Die</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>10500 ₸</td><td>1500 ₽</td><td>$44</td>
+                    <td>10500 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/105600/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/105600" target="_blank">Terraria</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>2900 ₸</td><td>385 ₽</td><td>$9</td>
+                    <td>2900 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/218620/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/218620" target="_blank">PAYDAY 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>2800 ₸</td><td>385 ₽</td><td>$9</td>
+                    <td>2800 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/397540/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/397540" target="_blank">Borderlands 3</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>19000 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>19000 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/236430/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/236430" target="_blank">DARK SOULS II</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>6700 ₸</td><td>1699 ₽</td><td>$39</td>
+                    <td>6700 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/413150/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/413150" target="_blank">Stardew Valley</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>2400 ₸</td><td>299 ₽</td><td>$14</td>
+                    <td>2400 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/275850/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/275850" target="_blank">No Mans Sky</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>14000 ₸</td><td>1900 ₽</td><td>$59</td>
+                    <td>14000 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/582010/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/582010" target="_blank">Monster Hunter World</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>10911 ₸</td><td>не доступна в РФ ❌</td><td>$29</td>
+                    <td>10911 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
+                </tr>
+<tr class="no-discount-row">
+                    <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1151640/header.jpg" alt="logo"></td>
+                    <td><a href="https://store.steampowered.com/app/1151640" target="_blank">Horizon Zero Dawn</a></td>
+                    <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
+                    <td>н/д</td><td>н/д</td><td>н/д</td>
+                </tr>
+<tr class="no-discount-row">
+                    <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1190460/header.jpg" alt="logo"></td>
+                    <td><a href="https://store.steampowered.com/app/1190460" target="_blank">Death Stranding</a></td>
+                    <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
+                    <td>н/д</td><td>н/д</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/3280350/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/3280350" target="_blank">DEATH STRANDING 2 ON THE BEACH</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>36599 ₸</td><td>не доступна в РФ ❌</td><td>$69</td>
+                    <td>36599 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1282100/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1282100" target="_blank">REMNANT II</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>16000 ₸</td><td>2869 ₽</td><td>$49</td>
+                    <td>16000 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/3764200/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/3764200" target="_blank">Resident Evil Requiem</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>25465 ₸</td><td>не доступна в РФ ❌</td><td>$69</td>
+                    <td>25465 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2050650/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/2050650" target="_blank">Resident Evil 4</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>14549 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>14549 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/883710/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/883710" target="_blank">Resident Evil 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>14549 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>14549 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/21690/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/21690" target="_blank">Resident Evil 5</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>7273 ₸</td><td>не доступна в РФ ❌</td><td>$19</td>
+                    <td>7273 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/221040/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/221040" target="_blank">Resident Evil 6</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>7273 ₸</td><td>не доступна в РФ ❌</td><td>$19</td>
+                    <td>7273 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/952060/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/952060" target="_blank">Resident Evil 3</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>14549 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>14549 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/222480/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/222480" target="_blank">Resident Evil Revelations</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>7273 ₸</td><td>не доступна в РФ ❌</td><td>$19</td>
+                    <td>7273 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1794680/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1794680" target="_blank">Vampire Survivors</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>1299 ₸</td><td>200 ₽</td><td>$4</td>
+                    <td>1299 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/3265700/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/3265700" target="_blank">Vampire Crawlers The Turbo Wildcard from Vampire Survivors</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>2900 ₸</td><td>385 ₽</td><td>$9</td>
+                    <td>2900 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1326470/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1326470" target="_blank">Sons Of The Forest</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>7600 ₸</td><td>1100 ₽</td><td>$29</td>
+                    <td>7600 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1593500/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1593500" target="_blank">God of War</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>18999 ₸</td><td>не доступна в РФ ❌</td><td>$49</td>
+                    <td>18999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1817070/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1817070" target="_blank">Marvels Spider-Man Remastered</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>23499 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>23499 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1446780/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1446780" target="_blank">Monster Hunter Rise</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>14549 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>14549 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1604030/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1604030" target="_blank">V Rising</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>8800 ₸</td><td>1200 ₽</td><td>$34</td>
+                    <td>8800 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/552500/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/552500" target="_blank">Warhammer Vermintide 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>7600 ₸</td><td>1499 ₽</td><td>$29</td>
+                    <td>7600 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/235540/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/235540" target="_blank">Warhammer End Times - Vermintide</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>7600 ₸</td><td>1499 ₽</td><td>$29</td>
+                    <td>7600 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/311210/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/311210" target="_blank">Call of Duty Black Ops III</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/4435490/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/4435490" target="_blank">Call of Duty Modern Warfare 4</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>45999 ₸</td><td>не доступна в РФ ❌</td><td>$69</td>
+                    <td>45999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/476600/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/476600" target="_blank">Call of Duty WWII</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/3595230/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/3595230" target="_blank">Call of Duty Modern Warfare II</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>31661 ₸</td><td>не доступна в РФ ❌</td><td>$69</td>
+                    <td>31661 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2000950/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/2000950" target="_blank">Call of Duty Modern Warfare</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/292730/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/292730" target="_blank">Call of Duty Infinite Warfare</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/3606480/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/3606480" target="_blank">Call of Duty Black Ops 7</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>45999 ₸</td><td>не доступна в РФ ❌</td><td>$69</td>
+                    <td>45999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1985820/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1985820" target="_blank">Call of Duty Vanguard</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/4384550/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/4384550" target="_blank">Call of Duty Black Ops 6</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>39999 ₸</td><td>не доступна в РФ ❌</td><td>$69</td>
+                    <td>39999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1985810/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1985810" target="_blank">Call of Duty Black Ops Cold War</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>30030 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/209650/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/209650" target="_blank">Call of Duty Advanced Warfare - Gold_Edition</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>20020 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>20020 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/393080/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/393080" target="_blank">Call of Duty Modern Warfare Remastered 2017</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>20020 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>20020 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/374320/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/374320" target="_blank">DARK SOULS III</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>17999 ₸</td><td>2399 ₽</td><td>$59</td>
+                    <td>17999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/570940/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/570940" target="_blank">DARK SOULS REMASTERED</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>11999 ₸</td><td>2399 ₽</td><td>$39</td>
+                    <td>11999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/335300/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/335300" target="_blank">DARK SOULS II Scholar of the First Sin</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>11999 ₸</td><td>2399 ₽</td><td>$39</td>
+                    <td>11999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/648350/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/648350" target="_blank">Jurassic World Evolution</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>14156 ₸</td><td>не доступна в РФ ❌</td><td>$44</td>
+                    <td>14156 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1244460/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/1244460" target="_blank">Jurassic World Evolution 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>7100 ₸</td><td>не доступна в РФ ❌</td><td>$59</td>
+                    <td>7100 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/227300/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/227300" target="_blank">Euro Truck Simulator 2</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>5200 ₸</td><td>1249 ₽</td><td>$19</td>
+                    <td>5200 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/244210/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/244210" target="_blank">Assetto Corsa</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>5200 ₸</td><td>710 ₽</td><td>$19</td>
+                    <td>5200 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/805550/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/805550" target="_blank">Assetto Corsa Competizione</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>11400 ₸</td><td>1599 ₽</td><td>$39</td>
+                    <td>11400 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/281990/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/281990" target="_blank">Stellaris</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>20100 ₸</td><td>3049 ₽</td><td>$49</td>
+                    <td>20100 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/391220/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/391220" target="_blank">Rise of the Tomb Raider</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>9000 ₸</td><td>не доступна в РФ ❌</td><td>$29</td>
+                    <td>9000 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/489830/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/489830" target="_blank">The Elder Scrolls V Skyrim Special Edition</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>9999 ₸</td><td>не доступна в РФ ❌</td><td>$39</td>
+                    <td>9999 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr>
 <tr class="no-discount-row">
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/582660/header.jpg" alt="logo"></td>
                     <td><a href="https://store.steampowered.com/app/582660" target="_blank">Black Desert</a></td>
                     <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
-                    <td>1900 ₸</td><td>350 ₽</td><td>н/д</td>
+                    <td>1900 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
+                </tr>
+<tr class="no-discount-row">
+                    <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/750920/header.jpg" alt="logo"></td>
+                    <td><a href="https://store.steampowered.com/app/750920" target="_blank">Shadow of the Tomb Raider</a></td>
+                    <td style="text-align:center;"><span class="discount-cell discount-none">0%</span></td>
+                    <td>12000 ₸</td><td>не доступна в РФ ❌</td><td>н/д</td>
                 </tr></tbody></table></div>
     <script>
     function filterGames() {
