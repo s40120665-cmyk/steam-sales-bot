@@ -5,14 +5,20 @@ import json
 import config
 
 def get_price_for_region(app_id, region_code):
-    """Безопасный запрос цены в конкретном регионе Steam с защитой от сбоев"""
-    url = f"{config.STEAM_PRICE_API_BASE}{app_id}&cc={region_code}"
+    """Запрос точной цены с имитацией браузера для обхода блокировок Steam API"""
+    url = f"{config.STEAM_PRICE_API_BASE}{app_id}&cc={region_code}&l=ru"
+    # Добавляем заголовки, чтобы Steam думал, что запрос идет от реального человека
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
+    }
     try:
-        res = requests.get(url, timeout=10).json()
+        res = requests.get(url, headers=headers, timeout=10).json()
         if res and res.get(app_id, {}).get("success"):
             data = res[app_id]["data"]
             if data.get("is_free"):
                 return "Бесплатно", 0, 0
+            
             price_info = data.get("price_overview", {})
             if price_info:
                 price_raw = price_info.get("final", 0)
@@ -24,7 +30,6 @@ def get_price_for_region(app_id, region_code):
     return None, None, 0
 
 def send_tg_message(token, chat_id, text):
-    """Отправка сообщения в Telegram и возврат его message_id"""
     url = f"{config.TELEGRAM_API_BASE}{token}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown", "disable_web_page_preview": True}
     try:
@@ -34,26 +39,20 @@ def send_tg_message(token, chat_id, text):
         return None
 
 def delete_tg_message(token, chat_id, message_id):
-    """Удаление сообщения из канала по его ID"""
     url = f"{config.TELEGRAM_API_BASE}{token}/deleteMessage"
-    try:
-        requests.post(url, json={"chat_id": chat_id, "message_id": message_id})
-    except:
-        pass
+    try: requests.post(url, json={"chat_id": chat_id, "message_id": message_id})
+    except: pass
 
 def run_diagnostics(token, channel_id):
-    """Проверка прав бота в Telegram-канале для вывода на сайт"""
-    status_channel = "❌ Ошибка прав"
+    status_channel = "❌ Ошибка права доступа"
     url = f"{config.TELEGRAM_API_BASE}{token}/getChatAdministrators?chat_id={channel_id}"
     try:
         res = requests.get(url, timeout=5).json()
-        if res.get("ok"): 
-            status_channel = "✅ Активно (Бот в админах)"
-    except: 
-        pass
+        if res.get("ok"): status_channel = "✅ Активно (Бот в админах)"
+    except: pass
     return status_channel
 def generate_html(games, system_status):
-    """Генерация прокачанного сайта со статусом системы, поиском и историей цен"""
+    """Генерация прокачанного сайта с точными обложками, поиском и историей цен"""
     html_start = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -137,8 +136,12 @@ def generate_html(games, system_status):
             
         hist_badge = ' <span class="hist-min-badge">🔥 Рекорд!</span>' if g.get('is_historical_min') else ''
         
+        # Основная ссылка на картинку и альтернативная (капсульная) на случай сбоя бандлов
+        main_img = f"{config.STEAM_IMAGE_BASE}{g['id']}/header.jpg"
+        fallback_img = f"{config.STEAM_IMAGE_BASE}{g['id']}/capsule_616x353.jpg"
+        
         row = f"""<tr {row_class}>
-                    <td><img src="{config.STEAM_IMAGE_BASE}{g['id']}/header.jpg" alt="logo"></td>
+                    <td><img src="{main_img}" onerror="this.onerror=null; this.src='{fallback_img}';" alt="logo"></td>
                     <td><a href="{config.STEAM_STORE_APP_BASE}{g['id']}" target="_blank">{g['name']}</a>{hist_badge}</td>
                     <td style="text-align:center;"><span class="discount-cell {color_class}">{discount_text}</span></td>
                     <td>{g['price_kz']}</td><td>{g['price_ru']}</td><td>{g['price_us']}</td>
@@ -182,10 +185,11 @@ def main():
     all_games_data, tg_games_to_post, admin_reports, new_history_data = [], [], [], {}
     historical_prices = old_history.get("historical_min_prices", {})
 
-    print(f"Запуск гарантированной проверки цен с анализом графиков. Всего игр: {len(target_games)}")
+    print(f"Запуск гарантированной проверки точных цен. Всего игр: {len(target_games)}")
     for app_id, custom_name in target_games.items():
         kz_price, kz_initial, discount = None, None, 0
         
+        # 3 упорные попытки запроса Казахстана
         for attempt in range(3):
             kz_price, kz_initial, discount = get_price_for_region(app_id, "kz")
             if kz_price is not None: break
@@ -202,6 +206,21 @@ def main():
             is_historical_min = False
             price_history_note = ""
             
+            # Запрашиваем РФ и США ВСЕГДА, чтобы отображать актуальные цены на сайте
+            for attempt in range(3):
+                ru_price, _, _ = get_price_for_region(app_id, "ru")
+                if ru_price is not None:
+                    ru_text = f"{ru_price} ₽" if isinstance(ru_price, int) else "Бесплатно"
+                    break
+                time.sleep(1)
+                
+            for attempt in range(3):
+                us_price, _, _ = get_price_for_region(app_id, "us")
+                if us_price is not None:
+                    us_text = f"${us_price}" if isinstance(us_price, int) else "Бесплатно"
+                    break
+                time.sleep(1)
+
             if discount > 0 and isinstance(kz_price, int):
                 old_record = historical_prices.get(app_id)
                 if old_record is None or kz_price <= old_record:
@@ -210,20 +229,6 @@ def main():
                     price_history_note = "\n  🔥 *Исторический минимум цены!*"
                 else:
                     price_history_note = f"\n  📉 _Лучшая цена в истории: {old_record} ₸_"
-
-                for attempt in range(3):
-                    ru_price, _, _ = get_price_for_region(app_id, "ru")
-                    if ru_price is not None:
-                        ru_text = f"{ru_price} ₽" if isinstance(ru_price, int) else "Бесплатно"
-                        break
-                    time.sleep(1)
-                    
-                for attempt in range(3):
-                    us_price, _, _ = get_price_for_region(app_id, "us")
-                    if us_price is not None:
-                        us_text = f"${us_price}" if isinstance(us_price, int) else "Бесплатно"
-                        break
-                    time.sleep(1)
         
         time.sleep(0.8)
         game_entry = {
