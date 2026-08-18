@@ -5,6 +5,7 @@ import json
 import config
 
 def get_price_for_region(app_id, region_code):
+    """Безопасный запрос цены в конкретном регионе Steam с защитой от сбоев"""
     url = f"{config.STEAM_PRICE_API_BASE}{app_id}&cc={region_code}"
     try:
         res = requests.get(url, timeout=10).json()
@@ -23,6 +24,7 @@ def get_price_for_region(app_id, region_code):
     return None, None, 0
 
 def send_tg_message(token, chat_id, text):
+    """Отправка сообщения в Telegram и возврат его message_id"""
     url = f"{config.TELEGRAM_API_BASE}{token}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown", "disable_web_page_preview": True}
     try:
@@ -32,21 +34,26 @@ def send_tg_message(token, chat_id, text):
         return None
 
 def delete_tg_message(token, chat_id, message_id):
+    """Удаление сообщения из канала по его ID"""
     url = f"{config.TELEGRAM_API_BASE}{token}/deleteMessage"
-    try: requests.post(url, json={"chat_id": chat_id, "message_id": message_id})
-    except: pass
+    try:
+        requests.post(url, json={"chat_id": chat_id, "message_id": message_id})
+    except:
+        pass
 
 def run_diagnostics(token, channel_id):
-    """Проверка технического здоровья бота для вывода на сайт"""
+    """Проверка прав бота в Telegram-канале для вывода на сайт"""
     status_channel = "❌ Ошибка прав"
     url = f"{config.TELEGRAM_API_BASE}{token}/getChatAdministrators?chat_id={channel_id}"
     try:
         res = requests.get(url, timeout=5).json()
-        if res.get("ok"): status_channel = "✅ Активно (Бот в админах)"
-    except: pass
+        if res.get("ok"): 
+            status_channel = "✅ Активно (Бот в админах)"
+    except: 
+        pass
     return status_channel
 def generate_html(games, system_status):
-    """Генерация прокачанного сайта с поиском, сортировкой, серыми карточками и статусом системы"""
+    """Генерация прокачанного сайта со статусом системы, поиском и историей цен"""
     html_start = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -56,16 +63,11 @@ def generate_html(games, system_status):
     <style>
         body {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; }}
         h1 {{ text-align: center; color: #fff; margin-bottom: 20px; font-weight: 600; }}
-        
-        /* Плашка статуса системы прямо на сайте */
         .status-badge {{ max-width: 1000px; margin: 0 auto 20px auto; background: #162231; padding: 12px 20px; border-radius: 8px; border-left: 4px solid #66c0f4; font-size: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }}
         .status-badge span {{ font-weight: bold; }}
-
-        /* Стили для поиска */
         .search-container {{ max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: center; }}
         #search-input {{ width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s; }}
         #search-input:focus {{ border-color: #66c0f4; }}
-
         .table-container {{ max-width: 1000px; margin: 0 auto; background: #162231; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }}
         table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
         th, td {{ padding: 12px; text-align: left; border-bottom: 1px solid #233c51; }}
@@ -81,16 +83,15 @@ def generate_html(games, system_status):
         .discount-medium {{ background-color: #ff9800; }}
         .discount-low {{ background-color: #f44336; }}
         .discount-none {{ background-color: #4a5a6a; color: #a0a0a0; }}
+        .hist-min-badge {{ font-size: 11px; background: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 1px solid #4CAF50; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: bold; }}
     </style>
 </head>
 <body>
     <h1>🎮 Мониторинг цен Steam (Казахстан / РФ / США)</h1>
-    
     <div class="status-badge">
         <div>🛠️ Статус Telegram-канала: <span>{system_status}</span></div>
         <div style="color: #66c0f4;">Обновлено только что ⏱️</div>
     </div>
-
     <div class="search-container">
         <input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()">
     </div>
@@ -134,9 +135,11 @@ def generate_html(games, system_status):
             elif 50 <= g['discount'] < 70: color_class = "discount-low"
             else: color_class = "discount-medium"
             
+        hist_badge = ' <span class="hist-min-badge">🔥 Рекорд!</span>' if g.get('is_historical_min') else ''
+        
         row = f"""<tr {row_class}>
                     <td><img src="{config.STEAM_IMAGE_BASE}{g['id']}/header.jpg" alt="logo"></td>
-                    <td><a href="{config.STEAM_STORE_APP_BASE}{g['id']}" target="_blank">{g['name']}</a></td>
+                    <td><a href="{config.STEAM_STORE_APP_BASE}{g['id']}" target="_blank">{g['name']}</a>{hist_badge}</td>
                     <td style="text-align:center;"><span class="discount-cell {color_class}">{discount_text}</span></td>
                     <td>{g['price_kz']}</td><td>{g['price_ru']}</td><td>{g['price_us']}</td>
                 </tr>"""
@@ -144,8 +147,6 @@ def generate_html(games, system_status):
         
     full_html = html_start + "\n".join(table_rows) + html_end
     with open("index.html", "w", encoding="utf-8") as f: f.write(full_html)
-    print("Сайт index.html успешно обновлен.")
-
 def main():
     LIST_FILE = "games_list.txt"
     HISTORY_FILE = "history.json"
@@ -171,18 +172,17 @@ def main():
             with open(HISTORY_FILE, "r", encoding="utf-8") as f: old_history = json.load(f)
         except: pass
 
-    # Считываем force_update напрямую из скрытых параметров запуска пульта
     force_update = os.environ.get("FORCE_UPDATE") == "true"
-    
     if force_update and admin_id:
-        send_tg_message(bot_token, admin_id, "♻️ *Команда принудительного обновления принята!* Полностью очищаю старые посты в канале и перезаписываю базу...")
+        send_tg_message(bot_token, admin_id, "♻️ *Команда принудительного обновления принята!* Полностью очищаю старые посты...")
         if "posted_messages" in old_history:
             for m_id in old_history["posted_messages"]: delete_tg_message(bot_token, channel_id, m_id)
             old_history["posted_messages"] = []
 
     all_games_data, tg_games_to_post, admin_reports, new_history_data = [], [], [], {}
+    historical_prices = old_history.get("historical_min_prices", {})
 
-    print(f"Запуск гарантированной проверки цен. Всего игр: {len(target_games)}")
+    print(f"Запуск гарантированной проверки цен с анализом графиков. Всего игр: {len(target_games)}")
     for app_id, custom_name in target_games.items():
         kz_price, kz_initial, discount = None, None, 0
         
@@ -193,12 +193,24 @@ def main():
             
         if kz_price is None:
             kz_text, ru_text, us_text, discount = "н/д", "н/д", "н/д", 0
+            is_historical_min = False
+            price_history_note = ""
         else:
             kz_text = f"{kz_price} ₸" if isinstance(kz_price, int) else "Бесплатно"
             ru_text = "не доступна в РФ ❌"
             us_text = "н/д"
+            is_historical_min = False
+            price_history_note = ""
             
-            if discount > 0:
+            if discount > 0 and isinstance(kz_price, int):
+                old_record = historical_prices.get(app_id)
+                if old_record is None or kz_price <= old_record:
+                    historical_prices[app_id] = kz_price
+                    is_historical_min = True
+                    price_history_note = "\n  🔥 *Исторический минимум цены!*"
+                else:
+                    price_history_note = f"\n  📉 _Лучшая цена в истории: {old_record} ₸_"
+
                 for attempt in range(3):
                     ru_price, _, _ = get_price_for_region(app_id, "ru")
                     if ru_price is not None:
@@ -214,7 +226,11 @@ def main():
                     time.sleep(1)
         
         time.sleep(0.8)
-        game_entry = {"id": app_id, "name": custom_name, "discount": discount, "price_kz": kz_text, "price_ru": ru_text, "price_us": us_text}
+        game_entry = {
+            "id": app_id, "name": custom_name, "discount": discount, 
+            "price_kz": kz_text, "price_ru": ru_text, "price_us": us_text,
+            "is_historical_min": is_historical_min, "history_note": price_history_note
+        }
         all_games_data.append(game_entry)
         new_history_data[app_id] = discount
 
@@ -226,12 +242,10 @@ def main():
 
         if discount > 0: tg_games_to_post.append(game_entry)
 
-    # Проверяем здоровье системы и отдаем на сайт
     system_status = run_diagnostics(bot_token, channel_id)
     all_games_data.sort(key=lambda x: x['discount'], reverse=True)
     generate_html(all_games_data, system_status)
 
-    # ЛС Отчет для тебя
     if admin_id:
         if admin_reports:
             report_text = "📊 **ОТЧЕТ ОБ ИЗМЕНЕНИИ СКИДОК:**\n\n" + "\n".join(admin_reports)
@@ -239,7 +253,7 @@ def main():
         elif force_update:
             send_tg_message(bot_token, admin_id, "✅ *Канал успешно очищен и перезаписан!* База синхронизирована.")
         else:
-            send_tg_message(bot_token, admin_id, "🔎 *Проверка завершена:* Изменений в скидках с прошлой проверки нет. База стабильна.")
+            send_tg_message(bot_token, admin_id, "🔎 *Проверка завершена:* Изменений нет.")
 
     new_posted_messages = old_history.get("posted_messages", [])
     if tg_games_to_post and (admin_reports or force_update or not new_posted_messages):
@@ -253,7 +267,11 @@ def main():
             chunk = tg_games_to_post[i:i + chunk_size]
             message_lines = ["🔥 **АКТУАЛЬНЫЕ РАСПРОДАЖИ В STEAM**\n"]
             for g in chunk:
-                line = f"• **[{g['name']}]({config.STEAM_STORE_APP_BASE}{g['id']})** | `-{g['discount']}%`\n  🇰🇿 {g['price_kz']} | 🇷🇺 {g['price_ru']} | 🇺🇸 {g['price_us']}\n"
+                line = (
+                    f"• **[{g['name']}]({config.STEAM_STORE_APP_BASE}{g['id']})** | `-{g['discount']}%`\n"
+                    f"  🇰🇿 {g['price_kz']} | 🇷🇺 {g['price_ru']} | 🇺🇸 {g['price_us']}"
+                    f"{g['history_note']}\n"
+                )
                 message_lines.append(line)
             
             m_id = send_tg_message(bot_token, channel_id, "\n".join(message_lines))
@@ -261,7 +279,11 @@ def main():
             time.sleep(1)
 
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump({"discounts": new_history_data, "posted_messages": new_posted_messages}, f, ensure_ascii=False, indent=4)
+        json.dump({
+            "discounts": new_history_data, 
+            "posted_messages": new_posted_messages,
+            "historical_min_prices": historical_prices
+        }, f, ensure_ascii=False, indent=4)
 
 if __name__ == "__main__":
     main()
