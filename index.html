@@ -7,16 +7,11 @@
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #fff; margin-bottom: 20px; font-weight: 600; }
-        
-        /* Плашка статуса системы прямо на сайте */
         .status-badge { max-width: 1000px; margin: 0 auto 20px auto; background: #162231; padding: 12px 20px; border-radius: 8px; border-left: 4px solid #66c0f4; font-size: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .status-badge span { font-weight: bold; }
-
-        /* Стили для поиска */
         .search-container { max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: center; }
         #search-input { width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s; }
         #search-input:focus { border-color: #66c0f4; }
-
         .table-container { max-width: 1000px; margin: 0 auto; background: #162231; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #233c51; }
@@ -32,16 +27,15 @@
         .discount-medium { background-color: #ff9800; }
         .discount-low { background-color: #f44336; }
         .discount-none { background-color: #4a5a6a; color: #a0a0a0; }
+        .hist-min-badge { font-size: 11px; background: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 1px solid #4CAF50; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>🎮 Мониторинг цен Steam (Казахстан / РФ / США)</h1>
-    
     <div class="status-badge">
         <div>🛠️ Статус Telegram-канала: <span>✅ Активно (Бот в админах)</span></div>
         <div style="color: #66c0f4;">Обновлено только что ⏱️</div>
     </div>
-
     <div class="search-container">
         <input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()">
     </div>
@@ -59,37 +53,37 @@
             </thead>
             <tbody><tr >
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1142710/header.jpg" alt="logo"></td>
-                    <td><a href="https://store.steampowered.com/app/1142710" target="_blank">Total War WARHAMMER III</a></td>
+                    <td><a href="https://store.steampowered.com/app/1142710" target="_blank">Total War WARHAMMER III</a> <span class="hist-min-badge">🔥 Рекорд!</span></td>
                     <td style="text-align:center;"><span class="discount-cell discount-high">-85%</span></td>
                     <td>3375 ₸</td><td>не доступна в РФ ❌</td><td>$8</td>
                 </tr>
 <tr >
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/364360/header.jpg" alt="logo"></td>
-                    <td><a href="https://store.steampowered.com/app/364360" target="_blank">Total War WARHAMMER</a></td>
+                    <td><a href="https://store.steampowered.com/app/364360" target="_blank">Total War WARHAMMER</a> <span class="hist-min-badge">🔥 Рекорд!</span></td>
                     <td style="text-align:center;"><span class="discount-cell discount-high">-75%</span></td>
                     <td>3650 ₸</td><td>не доступна в РФ ❌</td><td>$14</td>
                 </tr>
 <tr >
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/594570/header.jpg" alt="logo"></td>
-                    <td><a href="https://store.steampowered.com/app/594570" target="_blank">Total War WARHAMMER II</a></td>
+                    <td><a href="https://store.steampowered.com/app/594570" target="_blank">Total War WARHAMMER II</a> <span class="hist-min-badge">🔥 Рекорд!</span></td>
                     <td style="text-align:center;"><span class="discount-cell discount-high">-75%</span></td>
                     <td>3650 ₸</td><td>не доступна в РФ ❌</td><td>$14</td>
                 </tr>
 <tr >
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1235140/header.jpg" alt="logo"></td>
-                    <td><a href="https://store.steampowered.com/app/1235140" target="_blank">Yakuza Like a Dragon</a></td>
+                    <td><a href="https://store.steampowered.com/app/1235140" target="_blank">Yakuza Like a Dragon</a> <span class="hist-min-badge">🔥 Рекорд!</span></td>
                     <td style="text-align:center;"><span class="discount-cell discount-low">-60%</span></td>
                     <td>3600 ₸</td><td>не доступна в РФ ❌</td><td>$7</td>
                 </tr>
 <tr >
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/292000/header.jpg" alt="logo"></td>
-                    <td><a href="https://store.steampowered.com/app/292000" target="_blank">No More Room in Hell 2</a></td>
+                    <td><a href="https://store.steampowered.com/app/292000" target="_blank">No More Room in Hell 2</a> <span class="hist-min-badge">🔥 Рекорд!</span></td>
                     <td style="text-align:center;"><span class="discount-cell discount-medium">-35%</span></td>
                     <td>4940 ₸</td><td>715 ₽</td><td>$19</td>
                 </tr>
 <tr >
                     <td><img src="https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2958130/header.jpg" alt="logo"></td>
-                    <td><a href="https://store.steampowered.com/app/2958130" target="_blank">Jurassic World Evolution 3</a></td>
+                    <td><a href="https://store.steampowered.com/app/2958130" target="_blank">Jurassic World Evolution 3</a> <span class="hist-min-badge">🔥 Рекорд!</span></td>
                     <td style="text-align:center;"><span class="discount-cell discount-medium">-33%</span></td>
                     <td>12060 ₸</td><td>не доступна в РФ ❌</td><td>$40</td>
                 </tr>
