@@ -5,41 +5,57 @@ import json
 import config
 
 def get_price_for_region(app_id, region_code):
-    """Глубокий парсинг точной цены с обходом блокировок и чтением бандлов/изданий"""
-    url = f"{config.STEAM_PRICE_API_BASE}{app_id}&cc={region_code}&l=ru"
+    """Глубокий двухуровневый парсинг цен: сначала как одиночную игру, затем как бандл/пакет"""
+    # 1. Запрос стандартной одиночной игры (App)
+    url_app = f"{config.STEAM_PRICE_API_BASE}{app_id}&cc={region_code}&l=ru"
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        "Accept-Language": "ru-RU,ru;q=0.9,en-US;q=0.8"
     }
     try:
-        res = requests.get(url, headers=headers, timeout=12).json()
+        res = requests.get(url_app, headers=headers, timeout=10).json()
         if res and res.get(app_id, {}).get("success"):
             data = res[app_id]["data"]
             if data.get("is_free"):
                 return "Бесплатно", 0, 0
             
-            # Способ 1: Чтение стандартной одиночной цены
             price_info = data.get("price_overview", {})
             if price_info:
-                price_raw = price_info.get("final", 0)
-                initial_raw = price_info.get("initial", 0)
-                discount = price_info.get("discount_percent", 0)
-                return int(price_raw / 100), int(initial_raw / 100), discount
+                return int(price_info.get("final", 0) / 100), int(price_info.get("initial", 0) / 100), price_info.get("discount_percent", 0)
             
-            # Способ 2: Запасной глубокий парсинг для Изданий / Бандлов / Пакетов
+            # Если цена пустая, но есть привязанный пакет (издание/набор)
             package_groups = data.get("package_groups", [])
             if package_groups and len(package_groups) > 0:
                 subs = package_groups[0].get("subs", [])
                 if subs and len(subs) > 0:
-                    sub_info = subs[0]
-                    price_raw = sub_info.get("price_and_text", {}).get("final", 0) or sub_info.get("price_raw", 0)
-                    discount = sub_info.get("percent_savings", 0)
-                    if price_raw > 0:
-                        return int(price_raw / 100), int(price_raw / 100), discount
+                    # Извлекаем технический ID пакета (subid) для глубокой проверки
+                    sub_id = str(subs[0].get("packageid"))
+                    return get_package_price(sub_id, region_code)
+    except:
+        pass
+        
+    # Если игра сама по себе записана в файле как пакет (сборник)
+    return get_package_price(app_id, region_code)
+
+def get_package_price(sub_id, region_code):
+    """Второй уровень: Запрос цены напрямую из базы наборов и бандлов Steam (Sub API)"""
+    url_sub = f"https://steampowered.com{sub_id}&cc={region_code}&l=ru"
+    try:
+        res = requests.get(url_sub, timeout=10).json()
+        if res and res.get(sub_id, {}).get("success"):
+            data = res[sub_id]["data"]
+            price_info = data.get("price", {})
+            if price_info:
+                price_raw = price_info.get("final", 0)
+                initial_raw = price_info.get("initial", 0)
+                # Рассчитываем процент скидки комплекта вручную
+                discount = 0
+                if initial_raw > 0 and price_raw < initial_raw:
+                    discount = int(((initial_raw - price_raw) / initial_raw) * 100)
+                return int(price_raw / 100), int(initial_raw / 100), discount
     except:
         pass
     return None, None, 0
-
 def send_tg_message(token, chat_id, text):
     url = f"{config.TELEGRAM_API_BASE}{token}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown", "disable_web_page_preview": True}
@@ -48,6 +64,7 @@ def send_tg_message(token, chat_id, text):
         return res.get("result", {}).get("message_id")
     except:
         return None
+
 def delete_tg_message(token, chat_id, message_id):
     url = f"{config.TELEGRAM_API_BASE}{token}/deleteMessage"
     try: requests.post(url, json={"chat_id": chat_id, "message_id": message_id})
@@ -63,7 +80,7 @@ def run_diagnostics(token, channel_id):
     return status_channel
 
 def generate_html(games, system_status):
-    """Генерация сайта с 4-ступенчатой проверкой картинок для полного устранения битых иконок"""
+    """Генерация сайта со сквозным поиском картинок (включая обложки комплектов и подписок)"""
     html_start = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -132,20 +149,20 @@ def generate_html(games, system_status):
         }
     }
     
-    // Бронебойный перебор картинок: если ломается одна, по очереди пробуем остальные три
+    // Продвинутый перебор картинок: если это бандл/пакет, подставляем sub_header
     function handleImgError(img, appId) {
         if (!img.dataset.step) {
             img.dataset.step = "1";
-            img.src = "https://steamstatic.com" + appId + "/capsule_616x353.jpg";
+            img.src = "https://steamstatic.com" + appId + "/header.jpg";
         } else if (img.dataset.step === "1") {
             img.dataset.step = "2";
-            img.src = "https://steamstatic.com" + appId + "/header.jpg";
+            img.src = "https://steamstatic.com" + appId + "/capsule_616x353.jpg";
         } else if (img.dataset.step === "2") {
             img.dataset.step = "3";
             img.src = "https://steamstatic.com" + appId + "/page_bg_generated_v6b.jpg";
         } else {
             img.onerror = null;
-            img.src = "https://steamloopback.host"; // Финальная заглушка Steam
+            img.src = "https://steamloopback.host";
         }
     }
     </script>
@@ -162,7 +179,6 @@ def generate_html(games, system_status):
             else: color_class = "discount-medium"
             
         hist_badge = ' <span class="hist-min-badge">🔥 Рекорд!</span>' if g.get('is_historical_min') else ''
-        
         main_img = f"{config.STEAM_IMAGE_BASE}{g['id']}/header.jpg"
         
         row = f"""<tr {row_class}>
@@ -231,7 +247,6 @@ def main():
             is_historical_min = False
             price_history_note = ""
             
-            # Опрашиваем напрямую живую базу Valve для каждого региона
             for attempt in range(3):
                 ru_price, _, _ = get_price_for_region(app_id, "ru")
                 if ru_price is not None:
