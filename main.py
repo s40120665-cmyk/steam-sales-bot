@@ -31,66 +31,83 @@ def send_tg_message(token, chat_id, text):
     except:
         return None
 
-def send_tg_with_buttons(token, chat_id, text):
-    url = f"{config.TELEGRAM_API_BASE}{token}/sendMessage"
-    reply_markup = {
-        "keyboard": [[{"text": "🔄 Проверить скидки и отчет"}], [{"text": "🛠️ Проверить статус системы"}]],
-        "resize_keyboard": True
-    }
-    payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown", "disable_web_page_preview": True, "reply_markup": reply_markup}
-    try: requests.post(url, json=payload)
-    except: pass
-
 def delete_tg_message(token, chat_id, message_id):
     url = f"{config.TELEGRAM_API_BASE}{token}/deleteMessage"
     try: requests.post(url, json={"chat_id": chat_id, "message_id": message_id})
     except: pass
 
-def trigger_github_action(token, repo, force_update=False):
-    if not token or not repo: return "❌ Ошибка: В секретах не настроен PERSONAL_GH_TOKEN."
-    url = f"https://github.com{repo}/actions/workflows/run_bot.yml/dispatches"
-    headers = {"Authorization": f"token {token}", "Accept": "application/vnd.github.v3+json"}
-    payload = {"ref": "main", "inputs": {"force_update": "true" if force_update else "false"}}
-    res = requests.post(url, headers=headers, json=payload)
-    if res.status_code == 204:
-        return "🚀 *Запрос отправлен!* Проверка запущена, отчет прилетит через 1-2 минуты."
-    return f"❌ Ошибка GitHub (Код {res.status_code})"
-
 def run_diagnostics(token, channel_id):
-    report = ["🛠️ **ОТЧЕТ О СТАТУСЕ СИСТЕМЫ:**\n"]
+    """Проверка технического здоровья бота для вывода на сайт"""
+    status_channel = "❌ Ошибка прав"
     url = f"{config.TELEGRAM_API_BASE}{token}/getChatAdministrators?chat_id={channel_id}"
     try:
         res = requests.get(url, timeout=5).json()
-        if res.get("ok"): report.append("✅ *Связь с Telegram-каналом:* Успешно. Бот в админах.")
-        else: report.append("❌ *Связь с Telegram-каналом:* Ошибка. Проверьте права бота.")
-    except: report.append("❌ *Связь с Telegram-каналом:* Сервер ТГ недоступен.")
-    report.append("✅ *Файл конфигурации config.py:* На месте.")
-    report.append(f"✅ *Список игр games_list.txt:* На месте (Доступен: {os.path.exists('games_list.txt')}).")
-    return "\n".join(report)
-
-def check_admin_inline_commands(token, admin_id, gh_token, repo):
-    url = f"{config.TELEGRAM_API_BASE}{token}/getUpdates?timeout=1"
-    try:
-        res = requests.get(url, timeout=5).json()
-        updates = res.get("result", []) if isinstance(res, dict) else []
-        for u in reversed(updates):
-            msg = u.get("message", {})
-            if str(msg.get("from", {}).get("id")) == str(admin_id):
-                text = msg.get("text", "").strip()
-                if text == "🔄 Проверить скидки и отчет":
-                    status = trigger_github_action(gh_token, repo, force_update=False)
-                    send_tg_with_buttons(token, admin_id, status)
-                    return "stop"
-                elif text == "🛠️ Проверить статус системы":
-                    status = run_diagnostics(token, os.environ["TELEGRAM_CHANNEL_ID"])
-                    send_tg_with_buttons(token, admin_id, status)
-                    return "stop"
-                elif text == "/update":
-                    status = trigger_github_action(gh_token, repo, force_update=True)
-                    send_tg_with_buttons(token, admin_id, "♻️ *Запущена полная очистка канала!* Ожидайте отчет...")
-                    return "stop"
+        if res.get("ok"): status_channel = "✅ Активно (Бот в админах)"
     except: pass
-    return "run"
+    return status_channel
+def generate_html(games, system_status):
+    """Генерация прокачанного сайта с поиском, сортировкой, серыми карточками и статусом системы"""
+    html_start = f"""<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг цен Steam</title>
+    <style>
+        body {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #1b2838; color: #c7d5e0; margin: 0; padding: 20px; }}
+        h1 {{ text-align: center; color: #fff; margin-bottom: 20px; font-weight: 600; }}
+        
+        /* Плашка статуса системы прямо на сайте */
+        .status-badge {{ max-width: 1000px; margin: 0 auto 20px auto; background: #162231; padding: 12px 20px; border-radius: 8px; border-left: 4px solid #66c0f4; font-size: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }}
+        .status-badge span {{ font-weight: bold; }}
+
+        /* Стили для поиска */
+        .search-container {{ max-width: 1000px; margin: 0 auto 20px auto; display: flex; justify-content: center; }}
+        #search-input {{ width: 100%; max-width: 400px; padding: 12px 20px; background-color: #162231; border: 1px solid #233c51; border-radius: 25px; color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s; }}
+        #search-input:focus {{ border-color: #66c0f4; }}
+
+        .table-container {{ max-width: 1000px; margin: 0 auto; background: #162231; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
+        th, td {{ padding: 12px; text-align: left; border-bottom: 1px solid #233c51; }}
+        th {{ background-color: #1f334b; color: #66c0f4; font-weight: bold; }}
+        .no-discount-row {{ opacity: 0.5; transition: opacity 0.3s; }}
+        .no-discount-row:hover {{ opacity: 0.9; }}
+        tr:hover {{ background-color: #213143; }}
+        img {{ width: 120px; border-radius: 4px; display: block; }}
+        a {{ color: #66c0f4; text-decoration: none; font-weight: bold; }}
+        a:hover {{ text-decoration: underline; }}
+        .discount-cell {{ font-weight: bold; text-align: center; border-radius: 4px; padding: 6px 10px; color: #fff; display: inline-block; min-width: 45px; }}
+        .discount-high {{ background-color: #4CAF50; }}
+        .discount-medium {{ background-color: #ff9800; }}
+        .discount-low {{ background-color: #f44336; }}
+        .discount-none {{ background-color: #4a5a6a; color: #a0a0a0; }}
+    </style>
+</head>
+<body>
+    <h1>🎮 Мониторинг цен Steam (Казахстан / РФ / США)</h1>
+    
+    <div class="status-badge">
+        <div>🛠️ Статус Telegram-канала: <span>{system_status}</span></div>
+        <div style="color: #66c0f4;">Обновлено только что ⏱️</div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Поиск игры по названию..." onkeyup="filterGames()">
+    </div>
+    <div class="table-container">
+        <table id="games-table">
+            <thead>
+                <tr>
+                    <th>Обложка</th>
+                    <th>Название игры</th>
+                    <th style="text-align:center;">Скидка</th>
+                    <th>Цена КЗ</th>
+                    <th>Цена РФ</th>
+                    <th>Цена США</th>
+                </tr>
+            </thead>
+            <tbody>"""
+    
     html_end = """</tbody></table></div>
     <script>
     function filterGames() {
@@ -117,16 +134,17 @@ def check_admin_inline_commands(token, admin_id, gh_token, repo):
             elif 50 <= g['discount'] < 70: color_class = "discount-low"
             else: color_class = "discount-medium"
             
-        img_url = f"{config.STEAM_IMAGE_BASE}{g['id']}/header.jpg"
         row = f"""<tr {row_class}>
-                    <td><img src="{img_url}" alt="logo"></td>
+                    <td><img src="{config.STEAM_IMAGE_BASE}{g['id']}/header.jpg" alt="logo"></td>
                     <td><a href="{config.STEAM_STORE_APP_BASE}{g['id']}" target="_blank">{g['name']}</a></td>
                     <td style="text-align:center;"><span class="discount-cell {color_class}">{discount_text}</span></td>
                     <td>{g['price_kz']}</td><td>{g['price_ru']}</td><td>{g['price_us']}</td>
                 </tr>"""
         table_rows.append(row)
         
-    with open("index.html", "w", encoding="utf-8") as f: f.write(html_start + "\n".join(table_rows) + html_end)
+    full_html = html_start + "\n".join(table_rows) + html_end
+    with open("index.html", "w", encoding="utf-8") as f: f.write(full_html)
+    print("Сайт index.html успешно обновлен.")
 
 def main():
     LIST_FILE = "games_list.txt"
@@ -136,15 +154,6 @@ def main():
     bot_token = os.environ["TELEGRAM_BOT_TOKEN"]
     channel_id = os.environ["TELEGRAM_CHANNEL_ID"]
     admin_id = os.environ.get("ADMIN_TELEGRAM_ID")
-    gh_token = os.environ.get("PERSONAL_GH_TOKEN")
-    repo = os.environ.get("GITHUB_REPOSITORY")
-
-    # 1. Проверяем новые нажатия кнопок перед запуском тяжелого парсера
-    if admin_id:
-        action = check_admin_inline_commands(bot_token, admin_id, gh_token, repo)
-        if action == "stop":
-            print("Обнаружена интерактивная команда пульта. Основная проверка отложена для перезапуска.")
-            return
 
     target_games = {}
     with open(LIST_FILE, "r", encoding="utf-8") as f:
@@ -162,8 +171,11 @@ def main():
             with open(HISTORY_FILE, "r", encoding="utf-8") as f: old_history = json.load(f)
         except: pass
 
+    # Считываем force_update напрямую из скрытых параметров запуска пульта
     force_update = os.environ.get("FORCE_UPDATE") == "true"
+    
     if force_update and admin_id:
+        send_tg_message(bot_token, admin_id, "♻️ *Команда принудительного обновления принята!* Полностью очищаю старые посты в канале и перезаписываю базу...")
         if "posted_messages" in old_history:
             for m_id in old_history["posted_messages"]: delete_tg_message(bot_token, channel_id, m_id)
             old_history["posted_messages"] = []
@@ -174,25 +186,18 @@ def main():
     for app_id, custom_name in target_games.items():
         kz_price, kz_initial, discount = None, None, 0
         
-        # Умная система повторных попыток (до 3 раз), если Steam завис или смолчал
         for attempt in range(3):
             kz_price, kz_initial, discount = get_price_for_region(app_id, "kz")
-            if kz_price is not None:
-                break # Успешно получили данные, выходим из цикла попыток
-            time.sleep(1.5) # Если была ошибка, ждем подольше перед повтором
+            if kz_price is not None: break
+            time.sleep(1.5)
             
-        # Если даже после 3 попыток регион КЗ недоступен, ставим заглушку, но НЕ пропускаем игру для сайта
         if kz_price is None:
-            kz_text = "н/д"
-            ru_text = "н/д"
-            us_text = "н/д"
-            discount = 0
+            kz_text, ru_text, us_text, discount = "н/д", "н/д", "н/д", 0
         else:
             kz_text = f"{kz_price} ₸" if isinstance(kz_price, int) else "Бесплатно"
             ru_text = "не доступна в РФ ❌"
             us_text = "н/д"
             
-            # Запрашиваем РФ и США ТОЛЬКО если у игры есть активная скидка в КЗ
             if discount > 0:
                 for attempt in range(3):
                     ru_price, _, _ = get_price_for_region(app_id, "ru")
@@ -208,9 +213,7 @@ def main():
                         break
                     time.sleep(1)
         
-        # Делаем базовую микропаузу между играми
         time.sleep(0.8)
-
         game_entry = {"id": app_id, "name": custom_name, "discount": discount, "price_kz": kz_text, "price_ru": ru_text, "price_us": us_text}
         all_games_data.append(game_entry)
         new_history_data[app_id] = discount
@@ -223,17 +226,20 @@ def main():
 
         if discount > 0: tg_games_to_post.append(game_entry)
 
+    # Проверяем здоровье системы и отдаем на сайт
+    system_status = run_diagnostics(bot_token, channel_id)
     all_games_data.sort(key=lambda x: x['discount'], reverse=True)
-    generate_html(all_games_data)
+    generate_html(all_games_data, system_status)
 
+    # ЛС Отчет для тебя
     if admin_id:
         if admin_reports:
             report_text = "📊 **ОТЧЕТ ОБ ИЗМЕНЕНИИ СКИДОК:**\n\n" + "\n".join(admin_reports)
-            send_tg_with_buttons(bot_token, admin_id, report_text)
+            send_tg_message(bot_token, admin_id, report_text)
         elif force_update:
-            send_tg_with_buttons(bot_token, admin_id, "♻️ *Канал успешно очищен и перезаписан!* Изменений нет.")
+            send_tg_message(bot_token, admin_id, "✅ *Канал успешно очищен и перезаписан!* База синхронизирована.")
         else:
-            send_tg_with_buttons(bot_token, admin_id, "🔎 *Проверка завершена:* Изменений в скидках со времени прошлой проверки нет.")
+            send_tg_message(bot_token, admin_id, "🔎 *Проверка завершена:* Изменений в скидках с прошлой проверки нет. База стабильна.")
 
     new_posted_messages = old_history.get("posted_messages", [])
     if tg_games_to_post and (admin_reports or force_update or not new_posted_messages):
@@ -259,4 +265,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
