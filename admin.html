@@ -13,7 +13,7 @@
         .btn-blue:hover { background-color: #4da7db; }
         .btn-orange { background-color: #ff9800; }
         .btn-orange:hover { background-color: #e68a00; }
-        #status { margin-top: 20px; padding: 12px; border-radius: 6px; max-width: 280px; text-align: center; font-size: 14px; display: none; }
+        #status { margin-top: 20px; padding: 12px; border-radius: 6px; width: 100%; max-width: 260px; text-align: center; font-size: 14px; display: none; word-break: break-word; }
         .success { background-color: rgba(76, 175, 80, 0.2); color: #4CAF50; border: 1px solid #4CAF50; }
         .error { background-color: rgba(244, 67, 54, 0.2); color: #f44336; border: 1px solid #f44336; }
     </style>
@@ -28,11 +28,10 @@
     <div id="status"></div>
 
     <script>
-        // Вставь сюда первую и вторую половину твоего НОВОГО токена
+        // Твои проверенные рабочие половинки токена
         const TOKEN_PART1 = "ghp_2DeRrBxpuQ";
         const TOKEN_PART2 = "cPXmTAa2OLNoslKt2XWl3DEXUs";
         const REPO = "s40120665-cmyk/steam-sales-bot"; 
-
 
         function triggerAction(forceUpdate) {
             const statusDiv = document.getElementById("status");
@@ -40,7 +39,7 @@
             statusDiv.className = "";
             statusDiv.innerText = "⏳ Отправка команды на GitHub...";
 
-            const url = `https://github.com{REPO}/actions/workflows/run_bot.yml/dispatches`;
+            const url = `https://api.github.com/repos/${REPO}/actions/workflows/run_bot.yml/dispatches`;
             
             const payload = {
                 ref: "main",
@@ -49,27 +48,38 @@
 
             const fullToken = TOKEN_PART1 + TOKEN_PART2;
 
+            // Защитный таймер от бесконечного зависания на 4 секунды
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 4000);
+
             fetch(url, {
                 method: "POST",
+                signal: controller.signal,
                 headers: {
-                    "Authorization": `token ${fullToken}`,
+                    "Authorization": `Bearer ${fullToken}`,
                     "Accept": "application/vnd.github.v3+json",
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(payload)
             })
             .then(response => {
+                clearTimeout(timeoutId);
                 if (response.status === 204) {
                     statusDiv.className = "success";
                     statusDiv.innerText = "🚀 Команда успешно отправлена! Проверка запущена на сервере, ожидай отчет в ЛС через 1-2 минуты.";
                 } else {
                     statusDiv.className = "error";
-                    statusDiv.innerText = `❌ Ошибка сервера (Код ${response.status})`;
+                    statusDiv.innerText = `❌ Ошибка GitHub API (Код ${response.status}). Проверь секреты.`;
                 }
             })
             .catch(error => {
+                clearTimeout(timeoutId);
                 statusDiv.className = "error";
-                statusDiv.innerText = "❌ Ошибка сети или неверный токен.";
+                if (error.name === 'AbortError') {
+                    statusDiv.innerText = "❌ Превышено время ожидания. GitHub не ответил за 4 секунды.";
+                } else {
+                    statusDiv.innerText = `❌ Ошибка отправки: ${error.message || 'сетевой сбой'}`;
+                }
             });
         }
     </script>
